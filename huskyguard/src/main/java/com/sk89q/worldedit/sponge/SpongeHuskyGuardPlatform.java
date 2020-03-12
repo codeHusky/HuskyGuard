@@ -46,13 +46,16 @@ import com.sk89q.worldguard.util.profile.cache.ProfileCache;
 import com.sk89q.worldguard.util.profile.resolver.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.Slot;
 
 import javax.annotation.Nullable;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGuardPlatform {
@@ -85,7 +88,7 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
 
     @Override
     public void notifyFlagContextCreate(FlagContext.FlagContextBuilder flagContextBuilder) {
-        Bukkit.getServer().getPluginManager().callEvent(new FlagContextCreateEvent(flagContextBuilder));
+        Sponge.getServer().getPluginManager().callEvent(new FlagContextCreateEvent(flagContextBuilder));
     }
 
     @Override
@@ -105,21 +108,21 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
 
     @Override
     public void broadcastNotification(String message) {
-        Bukkit.broadcast(message, "worldguard.notify");
-        Set<Permissible> subs = Bukkit.getPluginManager().getPermissionSubscriptions("worldguard.notify");
+        SpongeUtil.broadcast(message, "worldguard.notify");
+        /*Set<Permissible> subs = Bukkit.getPluginManager().getPermissionSubscriptions("worldguard.notify");
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             if (!(subs.contains(player) && player.hasPermission("worldguard.notify")) &&
                     HuskyGuardPlugin.inst().hasPermission(player, "worldguard.notify")) { // Make sure the player wasn't already broadcasted to.
                 player.sendMessage(message);
             }
-        }
+        }*/
         WorldGuard.logger.info(message);
     }
 
     @Override
     public void broadcastNotification(TextComponent component) {
         List<LocalPlayer>
-                wgPlayers = Bukkit.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(
+                wgPlayers = Sponge.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(
                 Collectors.toList());
 
         for (LocalPlayer player : wgPlayers) {
@@ -172,17 +175,21 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
         boolean ignoreDamaged = localPlayer.hasPermission("worldguard.stack.damaged");
 
         Player player = ((SpongePlayer) localPlayer).getPlayer();
-        ArrayList<ItemStack> stacks = new ArrayList<>();
+        Map<Inventory,ItemStack> stacks = new HashMap<>();
         player.getInventory().slots().forEach(slot -> {
-            slot.peek().ifPresent(stacks::add);
+            if(slot.peek().isPresent()){
+                stacks.put(slot,slot.peek().get());
+            }
         });
-        ItemStack[] items = (ItemStack[]) stacks.toArray();
+        Inventory[] slots = (Inventory[]) stacks.keySet().toArray();
+        ItemStack[] items = (ItemStack[]) stacks.values().toArray();
         int len = items.length;
 
         int affected = 0;
 
         for (int i = 0; i < len; i++) {
             ItemStack item = items[i];
+            Inventory slot = slots[i];
 
             // Avoid infinite stacks and stacks with durability
             if (item == null || item.getQuantity() <= 0
@@ -198,6 +205,7 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
                 // Find another stack of the same type
                 for (int j = i + 1; j < len; j++) {
                     ItemStack item2 = items[j];
+                    Inventory slot2 = slots[j];
 
                     // Avoid infinite stacks and stacks with durability
                     if (item2 == null || item2.getQuantity() <= 0
@@ -224,7 +232,8 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
                             needed = max - item.getQuantity();
                         }
 
-                        affected++;
+                        slot.offer(item);
+                        slot2.offer(item2);
                     }
                 }
             }
@@ -260,9 +269,17 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
         if (world instanceof SpongeWorld) {
             org.spongepowered.api.world.World bWorld = ((SpongeWorld) world).getWorld();
             if (bWorld.getUniqueId().equals(((org.spongepowered.api.world.World)Sponge.getServer().getWorlds().toArray()[0]).getUniqueId())) {
-                int radius = Sponge.getPlatform().;
+                int radius = 0;
+                try {
+                    Properties p = new Properties();
+                    p.load(new FileInputStream(Paths.get("server.properties").toFile()));
+                    Object r = p.get("spawn-protection");
+                    radius = (int)r;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 if (radius > 0) {
-                    BlockVector3 spawnLoc = BukkitAdapter.asBlockVector(bWorld.getSpawnLocation());
+                    BlockVector3 spawnLoc = SpongeAdapter.asBlockVector(bWorld.getSpawnLocation());
                     return new ProtectedCuboidRegion("__spawn_protection__",
                             spawnLoc.subtract(radius, 0, radius).withY(world.getMinimumPoint().getY()),
                             spawnLoc.add(radius, 0, radius).withY(world.getMaxY()));

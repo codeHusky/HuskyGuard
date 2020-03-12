@@ -54,7 +54,7 @@ public class SpongeDebugHandler implements DebugHandler {
 
     private final HuskyGuardPlugin plugin;
 
-    SpongeDebugHandler(HuskyGuardPlugin plugin) {
+    public SpongeDebugHandler(HuskyGuardPlugin plugin) {
         this.plugin = plugin;
     }
 

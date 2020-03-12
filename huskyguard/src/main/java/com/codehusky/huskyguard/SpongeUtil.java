@@ -23,6 +23,7 @@ import com.sk89q.worldedit.sponge.SpongeAdapter;
 import com.sk89q.worldguard.blacklist.target.BlockTarget;
 import com.sk89q.worldguard.blacklist.target.ItemTarget;
 import com.sk89q.worldguard.blacklist.target.Target;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
@@ -31,6 +32,7 @@ import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -98,5 +100,12 @@ public class SpongeUtil {
 
     public static int getDurability( DataSerializable stack){
         return stack.toContainer().getInt(DataQuery.of("UnsafeDamage")).orElse(0);
+    }
+
+    public static void broadcast(String message, String permission){
+        Sponge.getServer().getOnlinePlayers().forEach(player -> {
+            if(player.hasPermission(permission))
+                player.sendMessage(Text.of(message));
+        });
     }
 }
