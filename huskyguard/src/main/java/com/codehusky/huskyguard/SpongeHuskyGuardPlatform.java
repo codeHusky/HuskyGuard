@@ -21,10 +21,7 @@ package com.codehusky.huskyguard;
 
 import com.codehusky.huskyguard.protection.events.flags.FlagContextCreateEvent;
 import com.codehusky.huskyguard.session.SpongeSessionManager;
-import com.codehusky.huskyguard.util.profile.resolver.PaperProfileService;
 import com.codehusky.huskyguard.util.report.*;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.report.ReportList;
@@ -43,11 +40,6 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.session.SessionManager;
 import com.sk89q.worldguard.util.profile.cache.ProfileCache;
 import com.sk89q.worldguard.util.profile.resolver.*;
-import io.papermc.lib.PaperLib;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.permissions.Permissible;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;

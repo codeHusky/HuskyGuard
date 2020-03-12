@@ -106,18 +106,5 @@ public class SpongeConfigurationManager extends YamlConfigurationManager {
         return config;
     }
 
-    public void updateCommandBookGodMode() {
-        try {
-            if (plugin.getServer().getPluginManager().isPluginEnabled("CommandBook")) {
-                Class.forName("com.sk89q.commandbook.GodComponent");
-                hasCommandBookGodMode = true;
-                return;
-            }
-        } catch (ClassNotFoundException ignore) {}
-        hasCommandBookGodMode = false;
-    }
 
-    public boolean hasCommandBookGodMode() {
-        return hasCommandBookGodMode;
-    }
 }

@@ -19,40 +19,67 @@
 
 package com.codehusky.huskyguard;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.WorldEditException;
+import com.sk89q.worldedit.blocks.BaseItemStack;
+import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.extent.Extent;
+import com.sk89q.worldedit.extent.inventory.BlockBag;
+import com.sk89q.worldedit.function.mask.Mask;
+import com.sk89q.worldedit.internal.cui.CUIEvent;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.Vector3;
+import com.sk89q.worldedit.session.SessionKey;
+import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.util.auth.AuthorizationException;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.world.World;
+import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockStateHolder;
+import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldedit.world.weather.WeatherType;
 import com.sk89q.worldedit.world.weather.WeatherTypes;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
-import io.papermc.lib.PaperLib;
-import org.bukkit.BanList.Type;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
-public class SpongePlayer extends com.sk89q.worldedit.bukkit.BukkitPlayer implements LocalPlayer {
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.Locale;
+import java.util.UUID;
+
+public class SpongePlayer implements LocalPlayer {
 
     protected final HuskyGuardPlugin plugin;
     private final boolean silenced;
     private String name;
+    private Player player;
 
     public SpongePlayer(HuskyGuardPlugin plugin, Player player) {
         this(plugin, player, false);
     }
 
     SpongePlayer(HuskyGuardPlugin plugin, Player player, boolean silenced) {
-        super(player);
         this.plugin = plugin;
         this.silenced = silenced;
+        this.player = player;
     }
 
     @Override
     public String getName() {
         if (this.name == null) {
             // getName() takes longer than before in newer versions of Minecraft
-            this.name = getPlayer().getName();
+            this.name = player.getName();
         }
         return name;
+    }
+
+    public User getPlayer() {
+        return this.player;
+
     }
 
     @Override
@@ -204,6 +231,11 @@ public class SpongePlayer extends com.sk89q.worldedit.bukkit.BukkitPlayer implem
     }
 
     @Override
+    public void checkPermission(String permission) throws AuthorizationException {
+
+    }
+
+    @Override
     public void printRaw(String msg) {
         if (!silenced) {
             super.printRaw(msg);
@@ -211,7 +243,249 @@ public class SpongePlayer extends com.sk89q.worldedit.bukkit.BukkitPlayer implem
     }
 
     @Override
+    public void printDebug(String msg) {
+
+    }
+
+    @Override
+    public void print(String msg) {
+
+    }
+
+    @Override
+    public void printError(String msg) {
+
+    }
+
+    @Override
+    public void print(Component component) {
+
+    }
+
+    @Override
+    public boolean canDestroyBedrock() {
+        return false;
+    }
+
+    @Override
+    public boolean isPlayer() {
+        return false;
+    }
+
+    @Override
+    public File openFileOpenDialog(String[] extensions) {
+        return null;
+    }
+
+    @Override
+    public File openFileSaveDialog(String[] extensions) {
+        return null;
+    }
+
+    @Override
+    public void dispatchCUIEvent(CUIEvent event) {
+
+    }
+
+    @Override
+    public Locale getLocale() {
+        return null;
+    }
+
+    @Override
     public boolean hasPermission(String perm) {
         return plugin.hasPermission(getPlayer(), perm);
+    }
+
+    @Override
+    public World getWorld() {
+        return null;
+    }
+
+    @Override
+    public boolean isHoldingPickAxe() {
+        return false;
+    }
+
+    @Override
+    public Direction getCardinalDirection(int yawOffset) {
+        return null;
+    }
+
+    @Override
+    public BaseItemStack getItemInHand(HandSide handSide) {
+        return null;
+    }
+
+    @Override
+    public BaseBlock getBlockInHand(HandSide handSide) throws WorldEditException {
+        return null;
+    }
+
+    @Override
+    public void giveItem(BaseItemStack itemStack) {
+
+    }
+
+    @Override
+    public BlockBag getInventoryBlockBag() {
+        return null;
+    }
+
+    @Override
+    public GameMode getGameMode() {
+        return null;
+    }
+
+    @Override
+    public void setGameMode(GameMode gameMode) {
+
+    }
+
+    @Override
+    public void findFreePosition(Location searchPos) {
+
+    }
+
+    @Override
+    public void setOnGround(Location searchPos) {
+
+    }
+
+    @Override
+    public void findFreePosition() {
+
+    }
+
+    @Override
+    public boolean ascendLevel() {
+        return false;
+    }
+
+    @Override
+    public boolean descendLevel() {
+        return false;
+    }
+
+    @Override
+    public boolean ascendToCeiling(int clearance) {
+        return false;
+    }
+
+    @Override
+    public boolean ascendToCeiling(int clearance, boolean alwaysGlass) {
+        return false;
+    }
+
+    @Override
+    public boolean ascendUpwards(int distance) {
+        return false;
+    }
+
+    @Override
+    public boolean ascendUpwards(int distance, boolean alwaysGlass) {
+        return false;
+    }
+
+    @Override
+    public void floatAt(int x, int y, int z, boolean alwaysGlass) {
+
+    }
+
+    @Override
+    public Location getBlockOn() {
+        return null;
+    }
+
+    @Override
+    public Location getBlockTrace(int range, boolean useLastBlock) {
+        return null;
+    }
+
+    @Override
+    public Location getBlockTrace(int range, boolean useLastBlock, @Nullable Mask stopMask) {
+        return null;
+    }
+
+    @Override
+    public Location getBlockTraceFace(int range, boolean useLastBlock) {
+        return null;
+    }
+
+    @Override
+    public Location getBlockTraceFace(int range, boolean useLastBlock, @Nullable Mask stopMask) {
+        return null;
+    }
+
+    @Override
+    public Location getBlockTrace(int range) {
+        return null;
+    }
+
+    @Override
+    public Location getSolidBlockTrace(int range) {
+        return null;
+    }
+
+    @Override
+    public Direction getCardinalDirection() {
+        return null;
+    }
+
+    @Override
+    public boolean passThroughForwardWall(int range) {
+        return false;
+    }
+
+    @Override
+    public void setPosition(Vector3 pos, float pitch, float yaw) {
+
+    }
+
+    @Override
+    public <B extends BlockStateHolder<B>> void sendFakeBlock(BlockVector3 pos, @Nullable B block) {
+
+    }
+
+    @Nullable
+    @Override
+    public BaseEntity getState() {
+        return null;
+    }
+
+    @Override
+    public boolean remove() {
+        return false;
+    }
+
+    @Override
+    public Location getLocation() {
+        return null;
+    }
+
+    @Override
+    public boolean setLocation(Location location) {
+        return false;
+    }
+
+    @Override
+    public Extent getExtent() {
+        return null;
+    }
+
+    @Override
+    public SessionKey getSessionKey() {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public <T> T getFacet(Class<? extends T> cls) {
+        return null;
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        return null;
     }
 }

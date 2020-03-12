@@ -31,10 +31,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.world.World;
 
 import java.util.logging.Logger;
 
-public class HuskyGuardWorldListener implements Listener {
+public class HuskyGuardWorldListener {
 
     private static final Logger log = Logger.getLogger(HuskyGuardWorldListener.class.getCanonicalName());
     private HuskyGuardPlugin plugin;
@@ -55,7 +57,7 @@ public class HuskyGuardWorldListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler
+    @Listener
     public void onChunkLoad(ChunkLoadEvent event) {
         ConfigurationManager cfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager();
 
@@ -75,7 +77,7 @@ public class HuskyGuardWorldListener implements Listener {
         }
     }
 
-    @EventHandler
+    @Listener
     public void onWorldLoad(WorldLoadEvent event) {
         initWorld(event.getWorld());
     }

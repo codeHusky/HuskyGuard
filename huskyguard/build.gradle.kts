@@ -17,22 +17,21 @@ repositories {
 
 dependencies {
     "compile"(project(":worldguard-core"))
-    "api"("com.sk89q.worldedit:worldedit-bukkit:${Versions.WORLDEDIT}") { isTransitive = false }
-    "implementation"("com.sk89q:commandbook:2.3") { isTransitive = false }
+    "api"("com.sk89q.worldedit:worldedit-sponge:${Versions.WORLDEDIT}") { isTransitive = false }
     "compile"("org.spongepowered:spongeapi:7.1.0")
 }
 
 tasks.named<Upload>("install") {
     (repositories as HasConvention).convention.getPlugin<MavenRepositoryHandlerConvention>().mavenInstaller {
         pom.whenConfigured {
-            dependencies.firstOrNull { dep ->
+            /*dependencies.firstOrNull { dep ->
                 dep!!.withGroovyBuilder {
                     getProperty("groupId") == "com.destroystokyo.paper" && getProperty("artifactId") == "paper-api"
                 }
             }?.withGroovyBuilder {
                 setProperty("groupId", "org.bukkit")
                 setProperty("artifactId", "bukkit")
-            }
+            }*/
         }
     }
 }

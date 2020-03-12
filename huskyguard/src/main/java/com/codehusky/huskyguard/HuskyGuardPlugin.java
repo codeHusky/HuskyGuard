@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.sk89q.bukkit.util.CommandsManagerRegistration;
 import com.sk89q.minecraft.util.commands.*;
 import com.sk89q.wepif.PermissionsResolverManager;
+import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.BukkitCommandSender;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
@@ -58,6 +59,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.game.state.GameStartingServerEvent;
+import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.world.World;
 
 import java.io.*;
 import java.util.HashMap;
@@ -69,7 +78,8 @@ import java.util.zip.ZipEntry;
 /**
  * The main class for WorldGuard as a Bukkit plugin.
  */
-public class HuskyGuardPlugin extends JavaPlugin {
+@Plugin(name="HuskyGuard",id="huskyguard",version="1.0.0",description = "A WorldGuard port, made with care.")
+public class HuskyGuardPlugin {
 
     private static HuskyGuardPlugin inst;
     private static SpongeHuskyGuardPlatform platform;
@@ -101,13 +111,13 @@ public class HuskyGuardPlugin extends JavaPlugin {
     /**
      * Called on plugin enable.
      */
-    @Override
-    public void onEnable() {
+    @Listener
+    public void onEnable(GameStartingServerEvent event) {
         configureLogger();
 
-        getDataFolder().mkdirs(); // Need to create the plugins/WorldGuard folder
 
-        PermissionsResolverManager.initialize(this);
+
+        //PermissionsResolverManager.initialize(this);
 
         WorldGuard.getInstance().setPlatform(platform = new SpongeHuskyGuardPlatform()); // Initialise WorldGuard
         WorldGuard.getInstance().setup();
@@ -122,9 +132,9 @@ public class HuskyGuardPlugin extends JavaPlugin {
         verifier.reportMismatches(ImmutableList.of(ProtectedRegion.class, ProtectedCuboidRegion.class, Flag.class));
 
         // Register command classes
-        final CommandsManagerRegistration reg = new CommandsManagerRegistration(this, commands);
-        reg.register(ToggleCommands.class);
-        reg.register(ProtectionCommands.class);
+        //final CommandsManagerRegistration reg = new CommandsManagerRegistration(this, commands);
+        //reg.register(ToggleCommands.class);
+        //reg.register(ProtectionCommands.class);
 
         getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
             if (!platform.getGlobalStateManager().hasCommandBookGodMode()) {
@@ -160,15 +170,11 @@ public class HuskyGuardPlugin extends JavaPlugin {
             (new DebuggingListener(this, WorldGuard.logger)).registerEvents();
         }
 
-        platform.getGlobalStateManager().updateCommandBookGodMode();
 
-        if (getServer().getPluginManager().isPluginEnabled("CommandBook")) {
-            getServer().getPluginManager().registerEvents(new HuskyGuardCommandBookListener(this), this);
-        }
 
         // handle worlds separately to initialize already loaded worlds
         HuskyGuardWorldListener worldListener = (new HuskyGuardWorldListener(this));
-        for (World world : getServer().getWorlds()) {
+        for (World world : Sponge.getServer().getWorlds()) {
             worldListener.initWorld(world);
         }
         worldListener.registerEvents();
@@ -182,52 +188,6 @@ public class HuskyGuardPlugin extends JavaPlugin {
 
         ((SimpleFlagRegistry) WorldGuard.getInstance().getFlagRegistry()).setInitialized(true);
 
-        // Enable metrics
-        final Metrics metrics = new Metrics(this, 3283); // bStats plugin id
-        if (metrics.isEnabled() && platform.getGlobalStateManager().extraStats) {
-            setupCustomCharts(metrics);
-        }
-    }
-
-    private void setupCustomCharts(Metrics metrics) {
-        metrics.addCustomChart(new Metrics.SingleLineChart("region_count", () ->
-                platform.getRegionContainer().getLoaded().stream().mapToInt(RegionManager::size).sum()));
-        metrics.addCustomChart(new Metrics.SimplePie("region_driver", () -> {
-            RegionDriver driver = platform.getGlobalStateManager().selectedRegionStoreDriver;
-            return driver instanceof DirectoryYamlDriver ? "yaml" : driver instanceof SQLDriver ? "sql" : "unknown";
-        }));
-        metrics.addCustomChart(new Metrics.DrilldownPie("blacklist", () -> {
-            int empty = 0;
-            Map<String, Integer> blacklistMap = new HashMap<>();
-            Map<String, Integer> whitelistMap = new HashMap<>();
-            for (SpongeWorldConfiguration worldConfig : platform.getGlobalStateManager().getWorldConfigs()) {
-                Blacklist blacklist = worldConfig.getBlacklist();
-                if (blacklist != null && !blacklist.isEmpty()) {
-                    Map<String, Integer> target = blacklist.isWhitelist() ? whitelistMap : blacklistMap;
-                    int floor = ((blacklist.getItemCount() - 1) / 10) * 10;
-                    String range = floor >= 100 ? "101+" : (floor + 1) + " - " + (floor + 10);
-                    target.merge(range, 1, Integer::sum);
-                } else {
-                    empty++;
-                }
-            }
-            Map<String, Map<String, Integer>> blacklistCounts = new HashMap<>();
-            Map<String, Integer> emptyMap = new HashMap<>();
-            emptyMap.put("empty", empty);
-            blacklistCounts.put("empty", emptyMap);
-            blacklistCounts.put("blacklist", blacklistMap);
-            blacklistCounts.put("whitelist", whitelistMap);
-            return blacklistCounts;
-        }));
-        metrics.addCustomChart(new Metrics.SimplePie("chest_protection", () ->
-                "" + platform.getGlobalStateManager().getWorldConfigs().stream().anyMatch(cfg -> cfg.signChestProtection)));
-        metrics.addCustomChart(new Metrics.SimplePie("build_permissions", () ->
-                "" + platform.getGlobalStateManager().getWorldConfigs().stream().anyMatch(cfg -> cfg.buildPermissions)));
-
-        metrics.addCustomChart(new Metrics.SimplePie("custom_flags", () ->
-                "" + (WorldGuard.getInstance().getFlagRegistry().size() > Flags.INBUILT_FLAGS.size())));
-        metrics.addCustomChart(new Metrics.SimplePie("custom_handlers", () ->
-                "" + (WorldGuard.getInstance().getPlatform().getSessionManager().customHandlersRegistered())));
     }
 
     @Override
@@ -281,7 +241,7 @@ public class HuskyGuardPlugin extends JavaPlugin {
      * @param group The group
      * @return whether {@code player} is in {@code group}
      */
-    public boolean inGroup(OfflinePlayer player, String group) {
+    public boolean inGroup(User player, String group) {
         try {
             return PermissionsResolverManager.getInstance().inGroup(player, group);
         } catch (Throwable t) {
@@ -296,7 +256,7 @@ public class HuskyGuardPlugin extends JavaPlugin {
      * @param player The player to check
      * @return The names of each group the playe is in.
      */
-    public String[] getGroups(OfflinePlayer player) {
+    public String[] getGroups(User player) {
         try {
             return PermissionsResolverManager.getInstance().getGroups(player);
         } catch (Throwable t) {
@@ -312,7 +272,7 @@ public class HuskyGuardPlugin extends JavaPlugin {
      * @param perm The permission to check the permission on.
      * @return whether {@code sender} has {@code perm}
      */
-    public boolean hasPermission(CommandSender sender, String perm) {
+    public boolean hasPermission(CommandSource sender, String perm) {
         if (sender.isOp()) {
             if (sender instanceof Player) {
                 if (platform.getGlobalStateManager().get(BukkitAdapter.adapt(((Player) sender).getWorld())).opPermissions) {
@@ -339,7 +299,7 @@ public class HuskyGuardPlugin extends JavaPlugin {
      * @param perm The permission to check the permission on.
      * @throws CommandPermissionsException if {@code sender} doesn't have {@code perm}
      */
-    public void checkPermission(CommandSender sender, String perm)
+    public void checkPermission(CommandSource sender, String perm)
             throws CommandPermissionsException {
         if (!hasPermission(sender, perm)) {
             throw new CommandPermissionsException();
@@ -352,14 +312,14 @@ public class HuskyGuardPlugin extends JavaPlugin {
      * @return The WorldEditPlugin instance
      * @throws CommandException If there is no WorldEditPlugin available
      */
-    public WorldEditPlugin getWorldEdit() throws CommandException {
+    public WorldEdit getWorldEdit() throws CommandException {
         Plugin worldEdit = getServer().getPluginManager().getPlugin("WorldEdit");
         if (worldEdit == null) {
             throw new CommandException("WorldEdit does not appear to be installed.");
         }
 
-        if (worldEdit instanceof WorldEditPlugin) {
-            return (WorldEditPlugin) worldEdit;
+        if (worldEdit instanceof WorldEdit) {
+            return (WorldEdit) worldEdit;
         } else {
             throw new CommandException("WorldEdit detection failed (report error).");
         }
