@@ -19,10 +19,30 @@
 
 package com.codehusky.huskyguard.util;
 
-import org.bukkit.entity.*;
-import org.bukkit.entity.minecart.ExplosiveMinecart;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.projectiles.ProjectileSource;
+import org.spongepowered.api.data.manipulator.mutable.entity.FlyingAbilityData;
+import org.spongepowered.api.data.manipulator.mutable.entity.TameableData;
+import org.spongepowered.api.data.manipulator.mutable.entity.VehicleData;
+import org.spongepowered.api.entity.EnderCrystal;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.entity.explosive.PrimedTNT;
+import org.spongepowered.api.entity.hanging.Hanging;
+import org.spongepowered.api.entity.living.*;
+import org.spongepowered.api.entity.living.animal.Pig;
+import org.spongepowered.api.entity.living.complex.EnderDragon;
+import org.spongepowered.api.entity.living.golem.Shulker;
+import org.spongepowered.api.entity.living.monster.Monster;
+import org.spongepowered.api.entity.living.monster.Slime;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.projectile.Projectile;
+import org.spongepowered.api.entity.projectile.arrow.Arrow;
+import org.spongepowered.api.entity.projectile.arrow.SpectralArrow;
+import org.spongepowered.api.entity.projectile.source.ProjectileSource;
+import org.spongepowered.api.entity.vehicle.minecart.ChestMinecart;
+import org.spongepowered.api.entity.vehicle.minecart.ContainerMinecart;
+import org.spongepowered.api.entity.vehicle.minecart.Minecart;
+import org.spongepowered.api.entity.vehicle.minecart.TNTMinecart;
 
 import javax.annotation.Nullable;
 
@@ -38,7 +58,8 @@ public final class Entities {
      * @return true if tamed
      */
     public static boolean isTamed(@Nullable Entity entity) {
-        return entity instanceof Tameable && ((Tameable) entity).isTamed();
+        if(entity == null) return false;
+        return entity.get(TameableData.class).isPresent() && entity.get(TameableData.class).get().owner().exists();
     }
 
     /**
@@ -48,7 +69,7 @@ public final class Entities {
      * @return true if TNT based
      */
     public static boolean isTNTBased(Entity entity) {
-        return entity instanceof TNTPrimed || entity instanceof ExplosiveMinecart;
+        return entity instanceof PrimedTNT || entity instanceof TNTMinecart;
     }
 
     /**
@@ -59,7 +80,7 @@ public final class Entities {
      * @return true if a fireball
      */
     public static boolean isFireball(EntityType type) {
-        return type == EntityType.FIREBALL || type == EntityType.SMALL_FIREBALL;
+        return type == EntityTypes.FIREBALL || type == EntityTypes.SMALL_FIREBALL;
     }
 
     /**
@@ -69,7 +90,7 @@ public final class Entities {
      * @return true if the entity can be ridden
      */
     public static boolean isRiddenOnUse(Entity entity) {
-        return entity instanceof Pig ? ((Pig) entity).hasSaddle() : entity instanceof Vehicle;
+        return entity instanceof Pig ? ((Pig) entity).getPigSaddleData().saddle().get() : entity.get(VehicleData.class).isPresent();
     }
 
     /**
@@ -79,7 +100,7 @@ public final class Entities {
      * @return true if the type is a vehicle type
      */
     public static boolean isVehicle(EntityType type) {
-        return type == EntityType.BOAT
+        return type == EntityTypes.BOAT
                 || isMinecart(type);
     }
 
@@ -90,13 +111,13 @@ public final class Entities {
      * @return true if the type is a Minecart type
      */
     public static boolean isMinecart(EntityType type) {
-        return type == EntityType.MINECART
-                || type == EntityType.MINECART_CHEST
-                || type == EntityType.MINECART_COMMAND
-                || type == EntityType.MINECART_FURNACE
-                || type == EntityType.MINECART_HOPPER
-                || type == EntityType.MINECART_MOB_SPAWNER
-                || type == EntityType.MINECART_TNT;
+        return type == EntityTypes.RIDEABLE_MINECART
+                || type == EntityTypes.CHESTED_MINECART
+                || type == EntityTypes.COMMANDBLOCK_MINECART
+                || type == EntityTypes.FURNACE_MINECART
+                || type == EntityTypes.HOPPER_MINECART
+                || type == EntityTypes.MOB_SPAWNER_MINECART
+                || type == EntityTypes.TNT_MINECART;
     }
 
     /**
@@ -128,8 +149,8 @@ public final class Entities {
      */
     public static boolean isHostile(Entity entity) {
         return entity instanceof Monster
-                || entity instanceof Slime
-                || entity instanceof Flying
+                //|| entity instanceof Slime // slimes are considered monsters
+                || entity.get(FlyingAbilityData.class).isPresent()
                 || entity instanceof EnderDragon
                 || entity instanceof Shulker;
     }
@@ -161,7 +182,8 @@ public final class Entities {
      * @return true if an NPC
      */
     public static boolean isNPC(Entity entity) {
-        return entity instanceof NPC || entity.hasMetadata("NPC");
+        //TODO: ???
+        return entity instanceof Human && !(entity instanceof Player);
     }
 
     /**
@@ -172,7 +194,7 @@ public final class Entities {
      * @return true if a non-player creature
      */
     public static boolean isNonPlayerCreature(Entity entity) {
-        return entity instanceof LivingEntity && !(entity instanceof Player);
+        return entity instanceof Living && !(entity instanceof Player);
     }
 
     /**
@@ -186,14 +208,14 @@ public final class Entities {
         return entity instanceof Hanging
                 || entity instanceof ArmorStand
                 || entity instanceof EnderCrystal
-                || entity instanceof Minecart && entity instanceof InventoryHolder;
+                || entity instanceof ContainerMinecart;
     }
 
     public static boolean isPotionArrow(Entity entity) {
-        return entity instanceof Arrow || entity instanceof SpectralArrow;
+        return entity instanceof Arrow; //|| entity instanceof SpectralArrow; //spectral arrows are arrows in sponge
     }
 
     public static boolean isAoECloud(EntityType type) {
-        return type == EntityType.AREA_EFFECT_CLOUD;
+        return type == EntityTypes.AREA_EFFECT_CLOUD;
     }
 }
