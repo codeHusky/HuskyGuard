@@ -20,14 +20,15 @@
 package com.codehusky.huskyguard.util;
 
 import com.google.common.base.Function;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
 public final class InteropUtils {
+    //TODO: this might not work at all but i don't even get what the hell the point of this is so lol
 
     @Nullable
     private static final Class<?> forgeFakePlayerClass;
@@ -66,12 +67,13 @@ public final class InteropUtils {
      * @return true if a fake player
      */
     public static boolean isFakePlayer(Player player) {
+
         UUID uuid = player.getUniqueId();
         String name = player.getName();
 
-        if (player.hasMetadata("NPC")) {
+        /*if (player.hasMetadata("NPC")) {
             return true;
-        }
+        }*/
 
         if (uuid.equals(forgeFakePlayerUuid)) {
             return true;
@@ -98,7 +100,7 @@ public final class InteropUtils {
         private final Method getHandleMethod;
 
         private PlayerHandleFunction() throws NoSuchMethodException, ClassNotFoundException {
-            craftPlayerClass = Class.forName(Bukkit.getServer().getClass().getCanonicalName().replaceAll("CraftServer$", "entity.CraftPlayer"));
+            craftPlayerClass = Class.forName(Sponge.getServer().getClass().getCanonicalName());
             getHandleMethod = craftPlayerClass.getMethod("getHandle");
         }
 

@@ -20,9 +20,6 @@
 package com.codehusky.huskyguard.util;
 
 import com.google.common.collect.Lists;
-import org.bukkit.event.Event;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredListener;
 
 import javax.annotation.Nullable;
 import java.util.List;
