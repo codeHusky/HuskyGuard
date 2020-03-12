@@ -27,6 +27,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.metadata.Metadatable;
+import org.spongepowered.api.entity.AreaEffectCloud;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.entity.explosive.PrimedTNT;
+import org.spongepowered.api.entity.living.Creature;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.projectile.Projectile;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -88,7 +95,7 @@ public final class Cause {
 
         boolean found = false;
         for (Object object : causes) {
-            if (!(object instanceof TNTPrimed) && !(object instanceof Vehicle)) {
+            if (!(object instanceof PrimedTNT) && !(object instanceof Vehicle)) {
                 found = true;
                 break;
             }
@@ -253,19 +260,11 @@ public final class Cause {
 
                     seen.add(o);
 
-                    if (o instanceof TNTPrimed) {
-                        addAll(((TNTPrimed) o).getSource());
+                    if (o instanceof PrimedTNT) {
+                        addAll(((PrimedTNT) o).getSource());
                     } else if (o instanceof Projectile) {
                         addAll(((Projectile) o).getShooter());
-                    } else if (o instanceof Firework && PaperLib.isPaper()) {
-                        UUID spawningUUID = ((Firework) o).getSpawningEntity();
-                        if (spawningUUID != null) {
-                            Entity spawningEntity = Bukkit.getEntity(spawningUUID);
-                            if (spawningEntity != null) {
-                                addAll(spawningEntity);
-                            }
-                        }
-                    } else if (o instanceof Vehicle) {
+                    }  else if (o instanceof Vehicle) {
                         ((Vehicle) o).getPassengers().forEach(this::addAll);
                     } else if (o instanceof AreaEffectCloud) {
                         indirect = true;

@@ -40,6 +40,9 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -122,8 +125,8 @@ class AbstractListener implements Listener {
             return Associables.constant(Association.NON_MEMBER);
         } else if (rootCause instanceof Player) {
             return getPlugin().wrapPlayer((Player) rootCause);
-        } else if (rootCause instanceof OfflinePlayer) {
-            return getPlugin().wrapOfflinePlayer((OfflinePlayer) rootCause);
+        } else if (rootCause instanceof User) {
+            return getPlugin().wrapOfflinePlayer((User) rootCause);
         } else if (rootCause instanceof Entity) {
             RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
             final Entity entity = (Entity) rootCause;

@@ -64,13 +64,18 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.command.SendCommandEvent;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.world.World;
 
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -83,7 +88,7 @@ public class HuskyGuardPlugin {
 
     private static HuskyGuardPlugin inst;
     private static SpongeHuskyGuardPlatform platform;
-    private final CommandsManager<Actor> commands;
+    //private final CommandsManager<Actor> commands;
     private PlayerMoveListener playerMoveListener;
 
     /**
@@ -92,12 +97,12 @@ public class HuskyGuardPlugin {
      */
     public HuskyGuardPlugin() {
         inst = this;
-        commands = new CommandsManager<Actor>() {
+        /*commands = new CommandsManager<Actor>() {
             @Override
             public boolean hasPermission(Actor player, String perm) {
                 return player.hasPermission(perm);
             }
-        };
+        };*/
     }
 
     /**
@@ -124,7 +129,7 @@ public class HuskyGuardPlugin {
         SpongeSessionManager sessionManager = (SpongeSessionManager) platform.getSessionManager();
 
         // Set the proper command injector
-        commands.setInjector(new SimpleInjector(WorldGuard.getInstance()));
+        //commands.setInjector(new SimpleInjector(WorldGuard.getInstance()));
 
         // Catch bad things being done by naughty plugins that include
         // WorldGuard's classes
@@ -136,16 +141,14 @@ public class HuskyGuardPlugin {
         //reg.register(ToggleCommands.class);
         //reg.register(ProtectionCommands.class);
 
-        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
-            if (!platform.getGlobalStateManager().hasCommandBookGodMode()) {
-                reg.register(GeneralCommands.class);
-            }
-        }, 0L);
 
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, sessionManager, SpongeSessionManager.RUN_DELAY, SpongeSessionManager.RUN_DELAY);
+
+        Sponge.getScheduler().createTaskBuilder()
+            .execute(sessionManager).delayTicks(SpongeSessionManager.RUN_DELAY).intervalTicks(SpongeSessionManager.RUN_DELAY).submit(this);
 
         // Register events
-        getServer().getPluginManager().registerEvents(sessionManager, this);
+        Sponge.getEventManager().registerListeners(this, sessionManager);
+        //TODO: change these to register listeners here, not within class
         (new HuskyGuardPlayerListener(this)).registerEvents();
         (new HuskyGuardBlockListener(this)).registerEvents();
         (new HuskyGuardEntityListener(this)).registerEvents();
@@ -184,20 +187,25 @@ public class HuskyGuardPlugin {
                 ProcessPlayerEvent event = new ProcessPlayerEvent(player);
                 Events.fire(event);
             }
-        });
+        }); //TODO: evaluate if this is neccesary, could be laggy if ported
 
         ((SimpleFlagRegistry) WorldGuard.getInstance().getFlagRegistry()).setInitialized(true);
 
     }
 
-    @Override
+    /*@Override
     public void onDisable() {
         WorldGuard.getInstance().disable();
         this.getServer().getScheduler().cancelTasks(this);
-    }
+    }*/
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    @Listener(order = Order.FIRST)
+    public boolean onCommand(SendCommandEvent event) {
+
+        CommandSource sender = (CommandSource) event.getSource();
+        String cmd = event.getCommand();
+        String label;
+        String[] args;
         try {
             Actor actor = wrapCommandSender(sender);
             try {
@@ -242,6 +250,8 @@ public class HuskyGuardPlugin {
      * @return whether {@code player} is in {@code group}
      */
     public boolean inGroup(User player, String group) {
+        player.getParents() // TODO: make this check
+
         try {
             return PermissionsResolverManager.getInstance().inGroup(player, group);
         } catch (Throwable t) {
@@ -257,6 +267,7 @@ public class HuskyGuardPlugin {
      * @return The names of each group the playe is in.
      */
     public String[] getGroups(User player) {
+        //TODO: do this
         try {
             return PermissionsResolverManager.getInstance().getGroups(player);
         } catch (Throwable t) {
@@ -273,23 +284,9 @@ public class HuskyGuardPlugin {
      * @return whether {@code sender} has {@code perm}
      */
     public boolean hasPermission(CommandSource sender, String perm) {
-        if (sender.isOp()) {
-            if (sender instanceof Player) {
-                if (platform.getGlobalStateManager().get(BukkitAdapter.adapt(((Player) sender).getWorld())).opPermissions) {
-                    return true;
-                }
-            } else {
-                return true;
-            }
-        }
 
-        // Invoke the permissions resolver
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            return PermissionsResolverManager.getInstance().hasPermission(player.getWorld().getName(), player, perm);
-        }
-
-        return false;
+        return sender.hasPermission(perm);
+        //return false;
     }
 
     /**
@@ -313,16 +310,12 @@ public class HuskyGuardPlugin {
      * @throws CommandException If there is no WorldEditPlugin available
      */
     public WorldEdit getWorldEdit() throws CommandException {
-        Plugin worldEdit = getServer().getPluginManager().getPlugin("WorldEdit");
-        if (worldEdit == null) {
+        Optional<PluginContainer> worldEdit = Sponge.getPluginManager().getPlugin("WorldEdit");
+        if (!worldEdit.isPresent()) {
             throw new CommandException("WorldEdit does not appear to be installed.");
         }
 
-        if (worldEdit instanceof WorldEdit) {
-            return (WorldEdit) worldEdit;
-        } else {
-            throw new CommandException("WorldEdit detection failed (report error).");
-        }
+        return WorldEdit.getInstance();
     }
 
     /**
@@ -346,12 +339,13 @@ public class HuskyGuardPlugin {
         return new SpongePlayer(this, player, silenced);
     }
 
-    public Actor wrapCommandSender(CommandSender sender) {
+    public Actor wrapCommandSender(CommandSource sender) {
         if (sender instanceof Player) {
             return wrapPlayer((Player) sender);
         }
 
         try {
+            //TODO: fix
             return new BukkitCommandSender(getWorldEdit(), sender);
         } catch (CommandException e) {
             e.printStackTrace();
@@ -359,7 +353,7 @@ public class HuskyGuardPlugin {
         return null;
     }
 
-    public CommandSender unwrapActor(Actor sender) {
+    public CommandSource unwrapActor(Actor sender) {
         if (sender instanceof SpongePlayer) {
             return ((SpongePlayer) sender).getPlayer();
         } else if (sender instanceof BukkitCommandSender) {
@@ -377,7 +371,7 @@ public class HuskyGuardPlugin {
      * @param player The player to wrap
      * @return The wrapped player
      */
-    public LocalPlayer wrapOfflinePlayer(OfflinePlayer player) {
+    public LocalPlayer wrapOfflinePlayer(User player) {
         return new SpongeOfflinePlayer(this, player);
     }
 
@@ -419,7 +413,7 @@ public class HuskyGuardPlugin {
 
         InputStream input = null;
         try {
-            JarFile file = new JarFile(getFile());
+            JarFile file = new JarFile(getFile()); //TODO: bruh
             ZipEntry copy = file.getEntry("defaults/" + defaultName);
             if (copy == null) throw new FileNotFoundException();
             input = file.getInputStream(copy);

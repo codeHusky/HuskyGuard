@@ -28,18 +28,20 @@ import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.weather.WeatherType;
-import org.bukkit.OfflinePlayer;
+import org.spongepowered.api.entity.living.player.User;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 class SpongeOfflinePlayer extends SpongePlayer {
 
-    private final OfflinePlayer player;
+    private final User player;
 
-    SpongeOfflinePlayer(HuskyGuardPlugin plugin, OfflinePlayer offlinePlayer) {
-        super(plugin, offlinePlayer.getPlayer()); // null if they are offline
+    SpongeOfflinePlayer(HuskyGuardPlugin plugin, User offlinePlayer) {
+        super(plugin, offlinePlayer.getPlayer().get()); // null if they are offline
         this.player = offlinePlayer;
+
+
     }
 
     /// ========================================
@@ -73,7 +75,7 @@ class SpongeOfflinePlayer extends SpongePlayer {
 
     @Override
     public boolean hasPermission(String perm) {
-        throw new UnsupportedOperationException();
+        return player.hasPermission(perm);
     }
 
     @Override
@@ -82,8 +84,7 @@ class SpongeOfflinePlayer extends SpongePlayer {
     }
 
     @Override
-    public void ban(String msg) {
-        throw new UnsupportedOperationException();
+    public void ban(String msg) { throw new UnsupportedOperationException();
     }
 
     @Override
