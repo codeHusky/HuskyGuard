@@ -28,26 +28,19 @@ import com.google.common.collect.ImmutableList;
 import com.sk89q.bukkit.util.CommandsManagerRegistration;
 import com.sk89q.minecraft.util.commands.*;
 import com.sk89q.wepif.PermissionsResolverManager;
-import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.BukkitCommandSender;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.sponge.SpongeCommandSender;
+import com.sk89q.worldedit.sponge.SpongeWorldEdit;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.blacklist.Blacklist;
-import com.sk89q.worldguard.commands.GeneralCommands;
-import com.sk89q.worldguard.commands.ProtectionCommands;
-import com.sk89q.worldguard.commands.ToggleCommands;
 import com.sk89q.worldguard.protection.flags.Flag;
-import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
-import com.sk89q.worldguard.protection.managers.storage.file.DirectoryYamlDriver;
-import com.sk89q.worldguard.protection.managers.storage.sql.SQLDriver;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldedit.sponge.SpongeHuskyGuardPlatform;
 import com.sk89q.worldguard.util.logging.RecordMessagePrefixer;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -61,6 +54,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
@@ -69,16 +63,14 @@ import org.spongepowered.api.event.command.SendCommandEvent;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.service.permission.SubjectReference;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.World;
 
-import javax.swing.text.html.Option;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.jar.JarFile;
+import java.util.*;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
 
 /**
  * The main class for WorldGuard as a Bukkit plugin.
@@ -226,16 +218,16 @@ public class HuskyGuardPlugin {
                 throw t;
             }
         } catch (CommandPermissionsException e) {
-            sender.sendMessage(ChatColor.RED + "You don't have permission.");
+            sender.sendMessage(Text.of(TextColors.RED + "You don't have permission."));
         } catch (MissingNestedCommandException e) {
-            sender.sendMessage(ChatColor.RED + e.getUsage());
+            sender.sendMessage(Text.of(TextColors.RED + e.getUsage()));
         } catch (CommandUsageException e) {
-            sender.sendMessage(ChatColor.RED + e.getMessage());
-            sender.sendMessage(ChatColor.RED + e.getUsage());
+            sender.sendMessage(Text.of(TextColors.RED + e.getMessage()));
+            sender.sendMessage(Text.of(TextColors.RED + e.getUsage()));
         } catch (WrappedCommandException e) {
-            sender.sendMessage(ChatColor.RED + e.getCause().getMessage());
+            sender.sendMessage(Text.of(TextColors.RED + e.getCause().getMessage()));
         } catch (CommandException e) {
-            sender.sendMessage(ChatColor.RED + e.getMessage());
+            sender.sendMessage(Text.of(TextColors.RED + e.getMessage()));
         }
 
         return true;
@@ -250,14 +242,15 @@ public class HuskyGuardPlugin {
      * @return whether {@code player} is in {@code group}
      */
     public boolean inGroup(User player, String group) {
-        player.getParents() // TODO: make this check
-
-        try {
-            return PermissionsResolverManager.getInstance().inGroup(player, group);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            return false;
+        List<SubjectReference> sR = player.getParents();
+        for(int i = 0; i < sR.size(); i++){
+            if(sR.get(i).getSubjectIdentifier().equals(group)){
+                return true;
+            }
         }
+
+        return false;
+
     }
 
     /**
@@ -267,9 +260,12 @@ public class HuskyGuardPlugin {
      * @return The names of each group the playe is in.
      */
     public String[] getGroups(User player) {
-        //TODO: do this
         try {
-            return PermissionsResolverManager.getInstance().getGroups(player);
+            List<String> list = new ArrayList<>();
+            player.getParents().forEach(subjectReference -> {
+                list.add(subjectReference.getSubjectIdentifier());
+            });
+            return (String[])list.toArray();
         } catch (Throwable t) {
             t.printStackTrace();
             return new String[0];
@@ -309,13 +305,13 @@ public class HuskyGuardPlugin {
      * @return The WorldEditPlugin instance
      * @throws CommandException If there is no WorldEditPlugin available
      */
-    public WorldEdit getWorldEdit() throws CommandException {
+    public SpongeWorldEdit getWorldEdit() throws CommandException {
         Optional<PluginContainer> worldEdit = Sponge.getPluginManager().getPlugin("WorldEdit");
         if (!worldEdit.isPresent()) {
             throw new CommandException("WorldEdit does not appear to be installed.");
         }
 
-        return WorldEdit.getInstance();
+        return SpongeWorldEdit.inst();
     }
 
     /**
@@ -346,7 +342,7 @@ public class HuskyGuardPlugin {
 
         try {
             //TODO: fix
-            return new BukkitCommandSender(getWorldEdit(), sender);
+            return new SpongeCommandSender(getWorldEdit(), sender);
         } catch (CommandException e) {
             e.printStackTrace();
         }
@@ -356,8 +352,8 @@ public class HuskyGuardPlugin {
     public CommandSource unwrapActor(Actor sender) {
         if (sender instanceof SpongePlayer) {
             return ((SpongePlayer) sender).getPlayer();
-        } else if (sender instanceof BukkitCommandSender) {
-            return Bukkit.getConsoleSender(); // TODO Fix
+        } else if (sender instanceof ConsoleSource) {
+            return Sponge.getServer().getConsole(); // TODO Fix
         } else {
             throw new IllegalArgumentException("Unknown actor type. Please report");
         }
@@ -412,14 +408,14 @@ public class HuskyGuardPlugin {
         }
 
         InputStream input = null;
-        try {
+        /*try {
             JarFile file = new JarFile(getFile()); //TODO: bruh
             ZipEntry copy = file.getEntry("defaults/" + defaultName);
             if (copy == null) throw new FileNotFoundException();
             input = file.getInputStream(copy);
-        } catch (IOException e) {
+        } catch (IOException e) {*/
             WorldGuard.logger.severe("Unable to read default configuration: " + defaultName);
-        }
+        //}
 
         if (input != null) {
             FileOutputStream output = null;

@@ -24,6 +24,7 @@ import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.session.SessionKey;
+import com.sk89q.worldedit.sponge.SpongeHuskyGuardPlatform;
 import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
@@ -37,7 +38,7 @@ class SpongeOfflinePlayer extends SpongePlayer {
 
     private final User player;
 
-    SpongeOfflinePlayer(HuskyGuardPlugin plugin, User offlinePlayer) {
+    SpongeOfflinePlayer(SpongeHuskyGuardPlatform plugin, User offlinePlayer) {
         super(plugin, offlinePlayer.getPlayer().get()); // null if they are offline
         this.player = offlinePlayer;
 
@@ -61,12 +62,12 @@ class SpongeOfflinePlayer extends SpongePlayer {
 
     @Override
     public boolean hasGroup(String group) {
-        return plugin.inGroup(player, group);
+        return HuskyGuardPlugin.inst().inGroup(player, group);
     }
 
     @Override
     public String[] getGroups() {
-        return plugin.getGroups(player);
+        return HuskyGuardPlugin.inst().getGroups(player);
     }
 
     /// ==========================================

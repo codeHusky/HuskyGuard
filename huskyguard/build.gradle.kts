@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     "compile"(project(":worldguard-core"))
-    "api"("com.sk89q.worldedit:worldedit-sponge:${Versions.WORLDEDIT}") { isTransitive = false }
+    "compile"("com.sk89q.worldedit:worldedit-sponge:${Versions.WORLDEDIT}") { isTransitive = false }
     "compile"("org.spongepowered:spongeapi:7.1.0")
 }
 

@@ -17,12 +17,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.codehusky.huskyguard;
+package com.sk89q.worldedit.sponge;
 
+import com.codehusky.huskyguard.*;
+import com.codehusky.huskyguard.SpongePlayer;
 import com.codehusky.huskyguard.protection.events.flags.FlagContextCreateEvent;
 import com.codehusky.huskyguard.session.SpongeSessionManager;
 import com.codehusky.huskyguard.util.report.*;
+import com.sk89q.worldedit.extension.platform.Watchdog;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.sponge.SpongePlatform;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.report.ReportList;
 import com.sk89q.worldedit.world.World;
@@ -48,7 +52,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SpongeHuskyGuardPlatform implements WorldGuardPlatform {
+public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGuardPlatform {
 
     private SessionManager sessionManager;
     private SpongeConfigurationManager configuration;
@@ -57,11 +61,18 @@ public class SpongeHuskyGuardPlatform implements WorldGuardPlatform {
     private StringMatcher stringMatcher;
 
     public SpongeHuskyGuardPlatform() {
+        super();
+    }
+
+    @Nullable
+    @Override
+    public Watchdog getWatchdog() {
+        return null;
     }
 
     @Override
     public String getPlatformName() {
-        return "Bukkit-Official";
+        return "Sponge-codeHusky";
     }
 
     @Override

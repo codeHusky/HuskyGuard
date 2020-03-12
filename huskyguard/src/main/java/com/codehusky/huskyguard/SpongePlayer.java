@@ -19,220 +19,191 @@
 
 package com.codehusky.huskyguard;
 
-import com.sk89q.worldedit.WorldEditException;
-import com.sk89q.worldedit.blocks.BaseItemStack;
-import com.sk89q.worldedit.entity.BaseEntity;
-import com.sk89q.worldedit.extent.Extent;
-import com.sk89q.worldedit.extent.inventory.BlockBag;
-import com.sk89q.worldedit.function.mask.Mask;
-import com.sk89q.worldedit.internal.cui.CUIEvent;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.math.Vector3;
-import com.sk89q.worldedit.session.SessionKey;
-import com.sk89q.worldedit.util.Direction;
-import com.sk89q.worldedit.util.HandSide;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
 import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldedit.util.auth.AuthorizationException;
-import com.sk89q.worldedit.util.formatting.text.Component;
-import com.sk89q.worldedit.world.World;
-import com.sk89q.worldedit.world.block.BaseBlock;
-import com.sk89q.worldedit.world.block.BlockStateHolder;
-import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldedit.world.weather.WeatherType;
 import com.sk89q.worldedit.world.weather.WeatherTypes;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
-
+import com.sk89q.worldedit.sponge.SpongeHuskyGuardPlatform;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.mutable.entity.HealthData;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.service.ban.BanService;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.title.Title;
+import org.spongepowered.api.util.ban.Ban;
+import org.spongepowered.api.world.weather.Weather;
+import org.spongepowered.api.world.weather.Weathers;
 
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.Locale;
-import java.util.UUID;
+public class SpongePlayer extends com.sk89q.worldedit.sponge.SpongePlayer implements LocalPlayer {
 
-public class SpongePlayer implements LocalPlayer {
 
-    protected final HuskyGuardPlugin plugin;
     private final boolean silenced;
     private String name;
-    private Player player;
 
-    public SpongePlayer(HuskyGuardPlugin plugin, Player player) {
-        this(plugin, player, false);
-    }
-
-    SpongePlayer(HuskyGuardPlugin plugin, Player player, boolean silenced) {
-        this.plugin = plugin;
+    public SpongePlayer(SpongeHuskyGuardPlatform platform, Player player, boolean silenced){
+        super(platform, player);
         this.silenced = silenced;
-        this.player = player;
     }
 
-    @Override
-    public String getName() {
-        if (this.name == null) {
-            // getName() takes longer than before in newer versions of Minecraft
-            this.name = player.getName();
-        }
-        return name;
-    }
-
-    public User getPlayer() {
-        return this.player;
-
+    public SpongePlayer(SpongeHuskyGuardPlatform platform, Player player) {
+        this(platform,player,false);
     }
 
     @Override
     public boolean hasGroup(String group) {
-        return plugin.inGroup(getPlayer(), group);
+        return HuskyGuardPlugin.inst().inGroup(getPlayer(), group);
     }
 
     @Override
     public void kick(String msg) {
         if (!silenced) {
-            getPlayer().kickPlayer(msg);
+            getPlayer().kick(Text.of(msg));
         }
     }
 
     @Override
     public void ban(String msg) {
         if (!silenced) {
-            Bukkit.getBanList(Type.NAME).addBan(getName(), null, null, null);
-            getPlayer().kickPlayer(msg);
+            Sponge.getServiceManager().provide(BanService.class).get().addBan(Ban.of(getPlayer().getProfile(),Text.of(msg)));
+            getPlayer().kick(Text.of(msg));
         }
     }
 
     @Override
     public double getHealth() {
-        return getPlayer().getHealth();
+        return getPlayer().get(Keys.HEALTH).get();
     }
 
     @Override
     public void setHealth(double health) {
-        getPlayer().setHealth(health);
+        getPlayer().offer(Keys.HEALTH,health);
     }
 
     @Override
     public double getMaxHealth() {
-        return getPlayer().getMaxHealth();
+        return getPlayer().get(Keys.MAX_HEALTH).get();
     }
 
     @Override
     public double getFoodLevel() {
-        return getPlayer().getFoodLevel();
+        return getPlayer().get(Keys.FOOD_LEVEL).get();
     }
 
     @Override
     public void setFoodLevel(double foodLevel) {
-        getPlayer().setFoodLevel((int) foodLevel);
+        getPlayer().offer(Keys.FOOD_LEVEL,(int) foodLevel);
     }
 
     @Override
     public double getSaturation() {
-        return getPlayer().getSaturation();
+        return getPlayer().get(Keys.SATURATION).get();
     }
 
     @Override
     public void setSaturation(double saturation) {
-        getPlayer().setSaturation((float) saturation);
+        getPlayer().offer(Keys.SATURATION,saturation);
     }
 
     @Override
     public float getExhaustion() {
-        return getPlayer().getExhaustion();
+        return getPlayer().get(Keys.EXHAUSTION).get().floatValue();
     }
 
     @Override
     public void setExhaustion(float exhaustion) {
-        getPlayer().setExhaustion(exhaustion);
+        getPlayer().offer(Keys.EXHAUSTION,(double)exhaustion);
     }
 
     @Override
     public WeatherType getPlayerWeather() {
-        org.bukkit.WeatherType playerWeather = getPlayer().getPlayerWeather();
-        return playerWeather == null ? null : playerWeather == org.bukkit.WeatherType.CLEAR ? WeatherTypes.CLEAR : WeatherTypes.RAIN;
+
+        Weather playerWeather = getPlayer().getWorld().getWeather();
+        return  playerWeather == Weathers.CLEAR ? WeatherTypes.CLEAR : WeatherTypes.RAIN;
     }
 
     @Override
     public void setPlayerWeather(WeatherType weather) {
-        getPlayer().setPlayerWeather(weather == WeatherTypes.CLEAR ? org.bukkit.WeatherType.CLEAR : org.bukkit.WeatherType.DOWNFALL);
+        throw new UnsupportedOperationException("codeHusky: Cannot set player-specific weather in Sponge.");
+        //getPlayer().setPlayerWeather(weather == WeatherTypes.CLEAR ? org.bukkit.WeatherType.CLEAR : org.bukkit.WeatherType.DOWNFALL);
     }
 
     @Override
     public void resetPlayerWeather() {
-        getPlayer().resetPlayerWeather();
+        //getPlayer().resetPlayerWeather();
+        WorldGuard.logger.warning("Attempted to reset player weather, but this feature isn't supported.");
     }
 
     @Override
     public boolean isPlayerTimeRelative() {
-        return getPlayer().isPlayerTimeRelative();
+        //return getPlayer().isPlayerTimeRelative();
+        return false;
     }
 
     @Override
     public long getPlayerTimeOffset() {
-        return getPlayer().getPlayerTimeOffset();
+        //return getPlayer().getPlayerTimeOffset();
+        return 0L;
     }
 
     @Override
     public void setPlayerTime(long time, boolean relative) {
-        getPlayer().setPlayerTime(time, relative);
+        //getPlayer().setPlayerTime(time, relative);
+        WorldGuard.logger.warning("Attempted to set player time, but this feature isn't supported.");
     }
 
     @Override
     public void resetPlayerTime() {
-        getPlayer().resetPlayerTime();
+        //getPlayer().resetPlayerTime();
+        WorldGuard.logger.warning("Attempted to reset player time, but this feature isn't supported.");
     }
 
     @Override
     public int getFireTicks() {
-        return getPlayer().getFireTicks();
+
+        return getPlayer().get(Keys.FIRE_TICKS).get();
     }
 
     @Override
     public void setFireTicks(int fireTicks) {
-        getPlayer().setFireTicks(fireTicks);
+        getPlayer().offer(Keys.FIRE_TICKS,fireTicks);
     }
 
     @Override
     public void setCompassTarget(Location location) {
-        getPlayer().setCompassTarget(BukkitAdapter.adapt(location));
+        getPlayer().offer(Keys.TARGETED_LOCATION, SpongeAdapter.adapt(location).getPosition());
     }
 
     @Override
     public void sendTitle(String title, String subtitle) {
         if (WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(getWorld()).forceDefaultTitleTimes) {
-            getPlayer().sendTitle(title, subtitle, 10, 70, 20);
+
+            getPlayer().sendTitle(Title.builder().title(Text.of(title)).subtitle(Text.of(subtitle)).fadeIn(10).stay(70).fadeOut(20).build());
         } else {
-            getPlayer().sendTitle(title, subtitle, -1, -1, -1);
+            getPlayer().sendTitle(Title.builder().title(Text.of(title)).subtitle(Text.of(subtitle)).fadeIn(-1).stay(-1).fadeOut(-1).build());
         }
     }
 
     @Override
     public void resetFallDistance() {
-        getPlayer().setFallDistance(0);
+        getPlayer().offer(Keys.FALL_DISTANCE,0F);
     }
 
     @Override
     public void teleport(Location location, String successMessage, String failMessage) {
-        PaperLib.teleportAsync(getPlayer(), BukkitAdapter.adapt(location))
-                .thenApply(success -> {
-                    if (success) {
-                        print(successMessage);
-                    } else {
-                        printError(failMessage);
-                    }
-                    return success;
-                });
+        if(getPlayer().setLocationSafely(SpongeAdapter.adapt(location))){
+            print(successMessage);
+        }else{
+            printError(failMessage);
+        }
+
     }
 
     @Override
     public String[] getGroups() {
-        return plugin.getGroups(getPlayer());
-    }
-
-    @Override
-    public void checkPermission(String permission) throws AuthorizationException {
-
+        return HuskyGuardPlugin.inst().getGroups(getPlayer());
     }
 
     @Override
@@ -243,249 +214,7 @@ public class SpongePlayer implements LocalPlayer {
     }
 
     @Override
-    public void printDebug(String msg) {
-
-    }
-
-    @Override
-    public void print(String msg) {
-
-    }
-
-    @Override
-    public void printError(String msg) {
-
-    }
-
-    @Override
-    public void print(Component component) {
-
-    }
-
-    @Override
-    public boolean canDestroyBedrock() {
-        return false;
-    }
-
-    @Override
-    public boolean isPlayer() {
-        return false;
-    }
-
-    @Override
-    public File openFileOpenDialog(String[] extensions) {
-        return null;
-    }
-
-    @Override
-    public File openFileSaveDialog(String[] extensions) {
-        return null;
-    }
-
-    @Override
-    public void dispatchCUIEvent(CUIEvent event) {
-
-    }
-
-    @Override
-    public Locale getLocale() {
-        return null;
-    }
-
-    @Override
     public boolean hasPermission(String perm) {
-        return plugin.hasPermission(getPlayer(), perm);
-    }
-
-    @Override
-    public World getWorld() {
-        return null;
-    }
-
-    @Override
-    public boolean isHoldingPickAxe() {
-        return false;
-    }
-
-    @Override
-    public Direction getCardinalDirection(int yawOffset) {
-        return null;
-    }
-
-    @Override
-    public BaseItemStack getItemInHand(HandSide handSide) {
-        return null;
-    }
-
-    @Override
-    public BaseBlock getBlockInHand(HandSide handSide) throws WorldEditException {
-        return null;
-    }
-
-    @Override
-    public void giveItem(BaseItemStack itemStack) {
-
-    }
-
-    @Override
-    public BlockBag getInventoryBlockBag() {
-        return null;
-    }
-
-    @Override
-    public GameMode getGameMode() {
-        return null;
-    }
-
-    @Override
-    public void setGameMode(GameMode gameMode) {
-
-    }
-
-    @Override
-    public void findFreePosition(Location searchPos) {
-
-    }
-
-    @Override
-    public void setOnGround(Location searchPos) {
-
-    }
-
-    @Override
-    public void findFreePosition() {
-
-    }
-
-    @Override
-    public boolean ascendLevel() {
-        return false;
-    }
-
-    @Override
-    public boolean descendLevel() {
-        return false;
-    }
-
-    @Override
-    public boolean ascendToCeiling(int clearance) {
-        return false;
-    }
-
-    @Override
-    public boolean ascendToCeiling(int clearance, boolean alwaysGlass) {
-        return false;
-    }
-
-    @Override
-    public boolean ascendUpwards(int distance) {
-        return false;
-    }
-
-    @Override
-    public boolean ascendUpwards(int distance, boolean alwaysGlass) {
-        return false;
-    }
-
-    @Override
-    public void floatAt(int x, int y, int z, boolean alwaysGlass) {
-
-    }
-
-    @Override
-    public Location getBlockOn() {
-        return null;
-    }
-
-    @Override
-    public Location getBlockTrace(int range, boolean useLastBlock) {
-        return null;
-    }
-
-    @Override
-    public Location getBlockTrace(int range, boolean useLastBlock, @Nullable Mask stopMask) {
-        return null;
-    }
-
-    @Override
-    public Location getBlockTraceFace(int range, boolean useLastBlock) {
-        return null;
-    }
-
-    @Override
-    public Location getBlockTraceFace(int range, boolean useLastBlock, @Nullable Mask stopMask) {
-        return null;
-    }
-
-    @Override
-    public Location getBlockTrace(int range) {
-        return null;
-    }
-
-    @Override
-    public Location getSolidBlockTrace(int range) {
-        return null;
-    }
-
-    @Override
-    public Direction getCardinalDirection() {
-        return null;
-    }
-
-    @Override
-    public boolean passThroughForwardWall(int range) {
-        return false;
-    }
-
-    @Override
-    public void setPosition(Vector3 pos, float pitch, float yaw) {
-
-    }
-
-    @Override
-    public <B extends BlockStateHolder<B>> void sendFakeBlock(BlockVector3 pos, @Nullable B block) {
-
-    }
-
-    @Nullable
-    @Override
-    public BaseEntity getState() {
-        return null;
-    }
-
-    @Override
-    public boolean remove() {
-        return false;
-    }
-
-    @Override
-    public Location getLocation() {
-        return null;
-    }
-
-    @Override
-    public boolean setLocation(Location location) {
-        return false;
-    }
-
-    @Override
-    public Extent getExtent() {
-        return null;
-    }
-
-    @Override
-    public SessionKey getSessionKey() {
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public <T> T getFacet(Class<? extends T> cls) {
-        return null;
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        return null;
+        return HuskyGuardPlugin.inst().hasPermission(getPlayer(), perm);
     }
 }
