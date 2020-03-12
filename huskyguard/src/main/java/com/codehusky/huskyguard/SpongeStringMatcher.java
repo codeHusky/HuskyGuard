@@ -21,20 +21,23 @@ package com.codehusky.huskyguard;
 
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.math.Vector3;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.internal.platform.StringMatcher;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.world.GeneratorType;
+import org.spongepowered.api.world.GeneratorTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SpongeStringMatcher implements StringMatcher {
@@ -52,7 +55,12 @@ public class SpongeStringMatcher implements StringMatcher {
                 // #normal for the first normal world
             } else if (filter.equalsIgnoreCase("#normal")) {
                 for (World world : worlds) {
-                    if (BukkitAdapter.adapt(world).getEnvironment() == org.bukkit.World.Environment.NORMAL) {
+
+                    if (SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.DEFAULT ||
+                            SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.LARGE_BIOMES ||
+                            SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.AMPLIFIED ||
+                            SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.NETHER ||
+                            SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.OVERWORLD) {
                         return world;
                     }
                 }
@@ -62,7 +70,7 @@ public class SpongeStringMatcher implements StringMatcher {
                 // #nether for the first nether world
             } else if (filter.equalsIgnoreCase("#nether")) {
                 for (World world : worlds) {
-                    if (BukkitAdapter.adapt(world).getEnvironment() == org.bukkit.World.Environment.NETHER) {
+                    if (SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.NETHER ) {
                         return world;
                     }
                 }
@@ -72,7 +80,7 @@ public class SpongeStringMatcher implements StringMatcher {
                 // #end for the first nether world
             } else if (filter.equalsIgnoreCase("#end")) {
                 for (World world : worlds) {
-                    if (BukkitAdapter.adapt(world).getEnvironment() == org.bukkit.World.Environment.THE_END) {
+                    if (SpongeAdapter.adapt(world).getProperties().getGeneratorType() == GeneratorTypes.THE_END ) {
                         return world;
                     }
                 }
@@ -105,7 +113,7 @@ public class SpongeStringMatcher implements StringMatcher {
 
     @Override
     public List<LocalPlayer> matchPlayerNames(String filter) {
-        List<LocalPlayer> wgPlayers = Bukkit.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
+        List<LocalPlayer> wgPlayers = Sponge.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
 
         filter = filter.toLowerCase();
 
@@ -152,11 +160,11 @@ public class SpongeStringMatcher implements StringMatcher {
 
     @Override
     public Iterable<? extends LocalPlayer> matchPlayers(Actor source, String filter) throws CommandException {
-        if (Bukkit.getServer().getOnlinePlayers().isEmpty()) {
+        if (Sponge.getServer().getOnlinePlayers().isEmpty()) {
             throw new CommandException("No players matched query.");
         }
 
-        List<LocalPlayer> wgPlayers = Bukkit.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
+        List<LocalPlayer> wgPlayers = Sponge.getServer().getOnlinePlayers().stream().map(player -> HuskyGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
 
         if (filter.equals("*")) {
             return checkPlayerMatch(wgPlayers);
@@ -210,7 +218,7 @@ public class SpongeStringMatcher implements StringMatcher {
         if (filter.equalsIgnoreCase("#console")
                 || filter.equalsIgnoreCase("*console*")
                 || filter.equalsIgnoreCase("!")) {
-            return HuskyGuardPlugin.inst().wrapCommandSender(Bukkit.getServer().getConsoleSender());
+            return HuskyGuardPlugin.inst().wrapCommandSender(Sponge.getServer().getConsole());
         }
 
         return matchSinglePlayer(sender, filter);
@@ -218,16 +226,13 @@ public class SpongeStringMatcher implements StringMatcher {
 
     @Override
     public World getWorldByName(String worldName) {
-        final org.bukkit.World bukkitW = Bukkit.getServer().getWorld(worldName);
-        if (bukkitW == null) {
-            return null;
-        }
-        return BukkitAdapter.adapt(bukkitW);
+        Optional<org.spongepowered.api.world.World> bukkitW = Sponge.getServer().getWorld(worldName);
+        return bukkitW.map(SpongeAdapter::adapt).orElse(null);
     }
 
     @Override
     public String replaceMacros(Actor sender, String message) {
-        Collection<? extends Player> online = Bukkit.getServer().getOnlinePlayers();
+        Collection<? extends Player> online = Sponge.getServer().getOnlinePlayers();
 
         message = message.replace("%name%", sender.getName());
         message = message.replace("%id%", sender.getUniqueId().toString());

@@ -40,6 +40,8 @@ import com.sk89q.worldguard.chest.ChestProtection;
 import com.sk89q.worldguard.commands.CommandUtils;
 import com.sk89q.worldguard.config.YamlWorldConfiguration;
 import org.bukkit.potion.PotionEffectType;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.effect.potion.PotionEffectType;
 import org.yaml.snakeyaml.parser.ParserException;
 
 import java.io.File;
@@ -77,7 +79,7 @@ public class SpongeWorldConfiguration extends YamlWorldConfiguration {
      * @param parentConfig The parent configuration to read defaults from
      */
     public SpongeWorldConfiguration(HuskyGuardPlugin plugin, String worldName, YAMLProcessor parentConfig) {
-        File baseFolder = new File(plugin.getDataFolder(), "worlds/" + worldName);
+        File baseFolder = new File(plugin.getDataFolder(), "worlds/" + worldName); //TODO: fix
         File configFile = new File(baseFolder, "config.yml");
         blacklistFile = new File(baseFolder, "blacklist.txt");
 
@@ -150,12 +152,12 @@ public class SpongeWorldConfiguration extends YamlWorldConfiguration {
 
         blockPotions = new HashSet<>();
         for (String potionName : getStringList("gameplay.block-potions", null)) {
-            PotionEffectType effect = PotionEffectType.getByName(potionName);
+            Optional<PotionEffectType> effect = Sponge.getRegistry().getType(PotionEffectType.class,potionName);
 
-            if (effect == null) {
+            if (!effect.isPresent()) {
                 log.warning("Unknown potion effect type '" + potionName + "'");
             } else {
-                blockPotions.add(effect);
+                blockPotions.add(effect.get());
             }
         }
         blockPotionsAlways = getBoolean("gameplay.block-potions-overly-reliably", false);

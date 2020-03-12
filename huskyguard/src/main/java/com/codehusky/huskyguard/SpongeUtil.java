@@ -19,13 +19,17 @@
 
 package com.codehusky.huskyguard;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
 import com.sk89q.worldguard.blacklist.target.BlockTarget;
 import com.sk89q.worldguard.blacklist.target.ItemTarget;
 import com.sk89q.worldguard.blacklist.target.Target;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.inventory.ItemStack;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.world.Location;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,26 +38,7 @@ public class SpongeUtil {
     private SpongeUtil() {
     }
 
-    /**
-     * Checks if the given potion is a vial of water.
-     *
-     * @param item the item to check
-     * @return true if it's a water vial
-     */
-    public static boolean isWaterPotion(ItemStack item) {
-        return (item.getDurability() & 0x3F) == 0;
-    }
 
-    /**
-     * Get just the potion effect bits. This is to work around bugs with potion
-     * parsing.
-     *
-     * @param item item
-     * @return new bits
-     */
-    public static int getPotionEffectBits(ItemStack item) {
-        return item.getDurability() & 0x3F;
-    }
 
     /**
      * Get a blacklist target for the given block.
@@ -62,9 +47,10 @@ public class SpongeUtil {
      * @param effectiveMaterial The effective material, if different
      * @return a target
      */
-    public static Target createTarget(Block block, Material effectiveMaterial) {
+    public static Target createTarget(BlockState block, BlockType effectiveMaterial) {
         checkNotNull(block);
         checkNotNull(block.getType());
+
         if (block.getType() == effectiveMaterial) {
             return createTarget(block.getType());
         } else {
@@ -78,10 +64,9 @@ public class SpongeUtil {
      * @param block the block
      * @return a target
      */
-    public static Target createTarget(Block block) {
+    public static Target createTarget(BlockType block) {
         checkNotNull(block);
-        checkNotNull(block.getType());
-        return createTarget(block.getType());
+        return createTarget(block);
     }
 
     /**
@@ -102,12 +87,10 @@ public class SpongeUtil {
      * @param material the material
      * @return a target
      */
-    public static Target createTarget(Material material) {
+    public static Target createTarget(ItemType material) {
         checkNotNull(material);
-        if (material.isBlock()) {
-            return new BlockTarget(BukkitAdapter.asBlockType(material));
-        } else {
-            return new ItemTarget(BukkitAdapter.asItemType(material));
-        }
+
+            return new ItemTarget(com.sk89q.worldedit.world.item.ItemType.REGISTRY.get(material.getId()));
+
     }
 }

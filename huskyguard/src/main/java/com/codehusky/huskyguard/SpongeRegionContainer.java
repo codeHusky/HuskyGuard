@@ -19,22 +19,22 @@
 
 package com.codehusky.huskyguard;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector2;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
+import com.sk89q.worldedit.sponge.SpongeWorld;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.world.LoadWorldEvent;
+import org.spongepowered.api.event.world.UnloadWorldEvent;
+import org.spongepowered.api.event.world.chunk.LoadChunkEvent;
+import org.spongepowered.api.event.world.chunk.UnloadChunkEvent;
+import org.spongepowered.api.world.Chunk;
+import org.w3c.dom.events.EventListener;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -59,41 +59,39 @@ public class SpongeRegionContainer extends RegionContainer {
     public SpongeRegionContainer(HuskyGuardPlugin plugin) {
         this.plugin = plugin;
     }
+    @Listener
+    public void onWorldLoad(LoadWorldEvent event) {
+        load(SpongeAdapter.adapt(event.getTargetWorld()));
+    }
 
+    @Listener
+    public void onWorldUnload(UnloadWorldEvent event) {
+        unload(SpongeAdapter.adapt(event.getTargetWorld()));
+    }
+
+    @Listener
+    public void onChunkLoad(LoadChunkEvent event) {
+        RegionManager manager = get(SpongeAdapter.adapt(event.getTargetChunk().getWorld()));
+        if (manager != null) {
+            Chunk chunk = event.getTargetChunk();
+            manager.loadChunk(BlockVector2.at(chunk.getPosition().getX(), chunk.getPosition().getZ()));
+        }
+    }
+
+    @Listener
+    public void onChunkUnload(UnloadChunkEvent event) {
+        RegionManager manager = get(SpongeAdapter.adapt(event.getTargetChunk().getWorld()));
+        if (manager != null) {
+            Chunk chunk = event.getTargetChunk();
+            manager.unloadChunk(BlockVector2.at(chunk.getPosition().getX(), chunk.getPosition().getZ()));
+        }
+    }
     @Override
     public void initialize() {
         super.initialize();
-        Bukkit.getPluginManager().registerEvents(new Listener() {
-            @EventHandler
-            public void onWorldLoad(WorldLoadEvent event) {
-                load(BukkitAdapter.adapt(event.getWorld()));
-            }
+        Sponge.getEventManager().registerListeners(this, plugin);
 
-            @EventHandler
-            public void onWorldUnload(WorldUnloadEvent event) {
-                unload(BukkitAdapter.adapt(event.getWorld()));
-            }
-
-            @EventHandler
-            public void onChunkLoad(ChunkLoadEvent event) {
-                RegionManager manager = get(BukkitAdapter.adapt(event.getWorld()));
-                if (manager != null) {
-                    Chunk chunk = event.getChunk();
-                    manager.loadChunk(BlockVector2.at(chunk.getX(), chunk.getZ()));
-                }
-            }
-
-            @EventHandler
-            public void onChunkUnload(ChunkUnloadEvent event) {
-                RegionManager manager = get(BukkitAdapter.adapt(event.getWorld()));
-                if (manager != null) {
-                    Chunk chunk = event.getChunk();
-                    manager.unloadChunk(BlockVector2.at(chunk.getX(), chunk.getZ()));
-                }
-            }
-        }, plugin);
-
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, cache::invalidateAll, CACHE_INVALIDATION_INTERVAL, CACHE_INVALIDATION_INTERVAL);
+        Sponge.getScheduler().createTaskBuilder().execute(cache::invalidateAll).delayTicks(CACHE_INVALIDATION_INTERVAL).intervalTicks(CACHE_INVALIDATION_INTERVAL).submit(plugin);
     }
 
     public void shutdown() {
@@ -118,8 +116,8 @@ public class SpongeRegionContainer extends RegionContainer {
             if (manager != null) {
                 // Bias the region data for loaded chunks
                 List<BlockVector2> positions = new ArrayList<>();
-                for (Chunk chunk : ((BukkitWorld) world).getWorld().getLoadedChunks()) {
-                    positions.add(BlockVector2.at(chunk.getX(), chunk.getZ()));
+                for (Chunk chunk : ((SpongeWorld) world).getWorld().getLoadedChunks()) {
+                    positions.add(BlockVector2.at(chunk.getPosition().getX(), chunk.getPosition().getZ()));
                 }
                 manager.loadChunks(positions);
             }
