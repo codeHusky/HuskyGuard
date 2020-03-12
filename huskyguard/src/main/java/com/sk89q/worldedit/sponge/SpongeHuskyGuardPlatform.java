@@ -44,6 +44,9 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.session.SessionManager;
 import com.sk89q.worldguard.util.profile.cache.ProfileCache;
 import com.sk89q.worldguard.util.profile.resolver.*;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -155,7 +158,7 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
 
     @Override
     public GameMode getDefaultGameMode() {
-        return GameModes.get(Bukkit.getServer().getDefaultGameMode().name().toLowerCase());
+        return GameModes.get(Sponge.getServer().getDefaultGameMode().name().toLowerCase());
     }
 
     @Override
@@ -169,8 +172,11 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
         boolean ignoreDamaged = localPlayer.hasPermission("worldguard.stack.damaged");
 
         Player player = ((SpongePlayer) localPlayer).getPlayer();
-
-        ItemStack[] items = player.getInventory().getContents();
+        ArrayList<ItemStack> stacks = new ArrayList<>();
+        player.getInventory().slots().forEach(slot -> {
+            slot.peek().ifPresent(stacks::add);
+        });
+        ItemStack[] items = (ItemStack[]) stacks.toArray();
         int len = items.length;
 
         int affected = 0;
@@ -179,43 +185,43 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
             ItemStack item = items[i];
 
             // Avoid infinite stacks and stacks with durability
-            if (item == null || item.getAmount() <= 0
-                    || (!ignoreMax && item.getMaxStackSize() == 1)) {
+            if (item == null || item.getQuantity() <= 0
+                    || (!ignoreMax && item.getMaxStackQuantity() == 1)) {
                 continue;
             }
 
-            int max = ignoreMax ? 64 : item.getMaxStackSize();
+            int max = ignoreMax ? 64 : item.getMaxStackQuantity();
 
-            if (item.getAmount() < max) {
-                int needed = max - item.getAmount(); // Number of needed items until max
+            if (item.getQuantity() < max) {
+                int needed = max - item.getQuantity(); // Number of needed items until max
 
                 // Find another stack of the same type
                 for (int j = i + 1; j < len; j++) {
                     ItemStack item2 = items[j];
 
                     // Avoid infinite stacks and stacks with durability
-                    if (item2 == null || item2.getAmount() <= 0
-                            || (!ignoreMax && item.getMaxStackSize() == 1)) {
+                    if (item2 == null || item2.getQuantity() <= 0
+                            || (!ignoreMax && item.getMaxStackQuantity() == 1)) {
                         continue;
                     }
 
                     // Same type?
                     // Blocks store their color in the damage value
                     if (item2.getType() == item.getType() &&
-                            (ignoreDamaged || item.getDurability() == item2.getDurability()) &&
-                            ((item.getItemMeta() == null && item2.getItemMeta() == null)
-                                    || (item.getItemMeta() != null &&
-                                    item.getItemMeta().equals(item2.getItemMeta())))) {
+                            (ignoreDamaged || SpongeUtil.getDurability(item) == SpongeUtil.getDurability(item2)) &&
+                            (item.toContainer().equals(item2.toContainer()))) {
                         // This stack won't fit in the parent stack
-                        if (item2.getAmount() > needed) {
-                            item.setAmount(max);
-                            item2.setAmount(item2.getAmount() - needed);
+                        if (item2.getQuantity() > needed) {
+                            item.setQuantity(max);
+                            item2.setQuantity(item2.getQuantity() - needed);
                             break;
                             // This stack will
                         } else {
-                            items[j] = null;
-                            item.setAmount(item.getAmount() + item2.getAmount());
-                            needed = max - item.getAmount();
+
+
+                            item.setQuantity(item.getQuantity() + item2.getQuantity());
+                            item2.setQuantity(0);
+                            needed = max - item.getQuantity();
                         }
 
                         affected++;
@@ -224,9 +230,9 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
             }
         }
 
-        if (affected > 0) {
+        /*if (affected > 0) {
             player.getInventory().setContents(items);
-        }
+        }*/
     }
 
     @Override
@@ -242,12 +248,7 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
     @Override
     public ProfileService createProfileService(ProfileCache profileCache) {
         List<ProfileService> services = new ArrayList<>();
-        if (PaperLib.isPaper()) {
-            // Paper has a shared cache
-            services.add(PaperProfileService.getInstance());
-        } else {
-            services.add(BukkitPlayerService.getInstance());
-        }
+        services.add(SpongePlayerService.getInstance());
         services.add(HttpRepositoryService.forMinecraft());
         return new CacheForwardingService(new CombinedProfileService(services),
                 profileCache);
@@ -256,10 +257,10 @@ public class SpongeHuskyGuardPlatform extends SpongePlatform implements WorldGua
     @Nullable
     @Override
     public ProtectedRegion getSpawnProtection(World world) {
-        if (world instanceof BukkitWorld) {
-            org.bukkit.World bWorld = ((BukkitWorld) world).getWorld();
-            if (bWorld.getUID().equals(Bukkit.getServer().getWorlds().get(0).getUID())) {
-                int radius = Bukkit.getServer().getSpawnRadius();
+        if (world instanceof SpongeWorld) {
+            org.spongepowered.api.world.World bWorld = ((SpongeWorld) world).getWorld();
+            if (bWorld.getUniqueId().equals(((org.spongepowered.api.world.World)Sponge.getServer().getWorlds().toArray()[0]).getUniqueId())) {
+                int radius = Sponge.getPlatform().;
                 if (radius > 0) {
                     BlockVector3 spawnLoc = BukkitAdapter.asBlockVector(bWorld.getSpawnLocation());
                     return new ProtectedCuboidRegion("__spawn_protection__",

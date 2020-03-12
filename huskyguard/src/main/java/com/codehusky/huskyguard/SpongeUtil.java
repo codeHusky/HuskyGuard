@@ -26,6 +26,8 @@ import com.sk89q.worldguard.blacklist.target.Target;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.data.DataQuery;
+import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -92,5 +94,9 @@ public class SpongeUtil {
 
             return new ItemTarget(com.sk89q.worldedit.world.item.ItemType.REGISTRY.get(material.getId()));
 
+    }
+
+    public static int getDurability( DataSerializable stack){
+        return stack.toContainer().getInt(DataQuery.of("UnsafeDamage")).orElse(0);
     }
 }
