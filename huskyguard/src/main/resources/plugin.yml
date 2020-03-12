@@ -1,0 +1,6 @@
+name: WorldGuard
+main: WorldGuardPlugin
+version: "${internalVersion}"
+depend: [WorldEdit]
+softdepend: [CommandBook]
+api-version: 1.13
