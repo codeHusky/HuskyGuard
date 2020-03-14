@@ -22,6 +22,7 @@ package com.codehusky.huskyguard.session;
 import com.codehusky.huskyguard.SpongePlayer;
 import com.codehusky.huskyguard.HuskyGuardPlugin;
 import com.codehusky.huskyguard.event.player.ProcessPlayerEvent;
+import com.sk89q.worldedit.sponge.SpongeHuskyGuardPlatform;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -32,6 +33,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
 
 import java.util.Collection;
 
@@ -47,7 +50,7 @@ public class SpongeSessionManager extends AbstractSessionManager implements Runn
      */
     @Override
     public void resetAllStates() {
-        Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
+        Collection<Player> players = Sponge.getServer().getOnlinePlayers();
         for (Player player : players) {
             SpongePlayer spongePlayer = new SpongePlayer(HuskyGuardPlugin.inst(), player);
             Session session = getIfPresent(spongePlayer);

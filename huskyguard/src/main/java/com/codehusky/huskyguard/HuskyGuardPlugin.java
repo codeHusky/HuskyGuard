@@ -68,6 +68,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.World;
 
+import javax.inject.Inject;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
@@ -77,6 +78,9 @@ import java.util.logging.Logger;
  */
 @Plugin(name="HuskyGuard",id="huskyguard",version="1.0.0",description = "A WorldGuard port, made with care.")
 public class HuskyGuardPlugin {
+
+    @Inject
+    public PluginContainer container;
 
     private static HuskyGuardPlugin inst;
     private static SpongeHuskyGuardPlatform platform;

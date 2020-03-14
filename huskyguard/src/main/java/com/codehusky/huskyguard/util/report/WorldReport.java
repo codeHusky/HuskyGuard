@@ -23,8 +23,12 @@ import com.sk89q.worldedit.util.report.DataReport;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.generator.ChunkGenerator;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.world.World;
+import org.spongepowered.api.world.gen.WorldGenerator;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,17 +37,17 @@ public class WorldReport extends DataReport {
     public WorldReport() {
         super("Worlds");
 
-        List<World> worlds = Bukkit.getServer().getWorlds();
+        Collection<World> worlds = Sponge.getServer().getWorlds();
 
         append("World Count", worlds.size());
 
         for (World world : worlds) {
             DataReport report = new DataReport("World: " + world.getName());
-            report.append("UUID", world.getUID());
-            report.append("World Type", world.getWorldType());
-            report.append("Environment", world.getEnvironment());
-            ChunkGenerator generator = world.getGenerator();
-            report.append("Chunk Generator", generator != null ? generator.getClass().getName() : "<Default>");
+            report.append("UUID", world.getUniqueId());
+            report.append("World Type", world.getDimension().getType().getId());
+            report.append("Environment", world.getDimension().getType().getId());
+            WorldGenerator generator = world.getWorldGenerator();
+            report.append("Chunk Generator", /*generator != null ?*/ generator.getClass().getName() /*: "<Default>"*/);
 
             DataReport spawning = new DataReport("Spawning");
             spawning.append("Animals?", world.getAllowAnimals());
@@ -69,8 +73,10 @@ public class WorldReport extends DataReport {
 
             DataReport protection = new DataReport("Protection");
             protection.append("PVP?", world.getPVP());
-            protection.append("Game Rules", Arrays.stream(world.getGameRules())
-                    .map(name -> name + "=" + world.getGameRuleValue(name))
+            protection.append("Game Rules", world.getGameRules()
+                    .((name,value) -> {
+                        return name + "=" + value;
+                    })
                     .collect(Collectors.joining(", ")));
             report.append(protection.getTitle(), protection);
 

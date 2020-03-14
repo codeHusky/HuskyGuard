@@ -19,6 +19,7 @@
 
 package com.codehusky.huskyguard.util;
 
+import com.codehusky.huskyguard.HuskyGuardPlugin;
 import com.codehusky.huskyguard.event.BulkEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -28,6 +29,11 @@ import org.bukkit.event.Event;
 import org.bukkit.event.Event.Result;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.Event;
+import org.spongepowered.api.event.cause.EventContext;
+import org.spongepowered.api.event.cause.EventContextKeys;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,8 +51,13 @@ public final class Events {
      * @param event the event
      */
     public static void fire(Event event) {
-        checkNotNull(event);
-        Bukkit.getServer().getPluginManager().callEvent(event);
+        PluginContainer plugin = HuskyGuardPlugin.inst().container;
+        EventContext eventContext = EventContext.builder().add(EventContextKeys.PLUGIN, plugin).build();
+
+        /*PlayerMutationEvent event = new PlayerMutationEvent(victim, PlayerMutationEvent.Mutation.ROTTED_SOCKS,
+                Cause.of(eventContext, plugin));*/
+        Sponge.getEventManager().post(event);
+        //Bukkit.getServer().getPluginManager().callEvent(event);
     }
 
     /**
