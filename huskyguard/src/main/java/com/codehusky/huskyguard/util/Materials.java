@@ -34,6 +34,7 @@ import org.spongepowered.api.effect.potion.PotionEffectType;
 import org.spongepowered.api.effect.potion.PotionEffectTypes;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -959,7 +960,7 @@ public final class Materials {
      * @return true if a Boat item
      */
     public static boolean isBoat(ItemType material) {
-        return material == ItemTypes.BIRCH_BOAT || material == ItemTypes.ACACIA_BOAT || material == ItemTypes.DARK_OAK_BOAT || material == ItemTypes.JUNGLE_BOAT || material == ItemTypes.OAK_BOAT ;
+        return material == ItemTypes.BIRCH_BOAT || material == ItemTypes.ACACIA_BOAT || material == ItemTypes.DARK_OAK_BOAT || material == ItemTypes.JUNGLE_BOAT || material == ItemTypes.BOAT ;
     }
 
     /**
@@ -985,15 +986,20 @@ public final class Materials {
 
     public static boolean isSpawnEgg(ItemType material) {
         if(material == null) return false;
-        if (ItemTypes.SPIDER_SPAWN_EGG.equals(material) || ItemTypes.BAT_SPAWN_EGG.equals(material) || ItemTypes.BEE_SPAWN_EGG.equals(material) || ItemTypes.BLAZE_SPAWN_EGG.equals(material) || ItemTypes.CAT_SPAWN_EGG.equals(material) || ItemTypes.CAVE_SPIDER_SPAWN_EGG.equals(material) || ItemTypes.CHICKEN_SPAWN_EGG.equals(material) || ItemTypes.COD_SPAWN_EGG.equals(material) || ItemTypes.COW_SPAWN_EGG.equals(material) || ItemTypes.CREEPER_SPAWN_EGG.equals(material) || ItemTypes.DOLPHIN_SPAWN_EGG.equals(material) || ItemTypes.DONKEY_SPAWN_EGG.equals(material) || ItemTypes.DROWNED_SPAWN_EGG.equals(material) || ItemTypes.ELDER_GUARDIAN_SPAWN_EGG.equals(material) || ItemTypes.ENDERMAN_SPAWN_EGG.equals(material) || ItemTypes.ENDERMITE_SPAWN_EGG.equals(material) || ItemTypes.EVOKER_SPAWN_EGG.equals(material) || ItemTypes.FOX_SPAWN_EGG.equals(material) || ItemTypes.GHAST_SPAWN_EGG.equals(material) || ItemTypes.GUARDIAN_SPAWN_EGG.equals(material) || ItemTypes.HORSE_SPAWN_EGG.equals(material) || ItemTypes.HUSK_SPAWN_EGG.equals(material) || ItemTypes.LLAMA_SPAWN_EGG.equals(material) || ItemTypes.MAGMA_CUBE_SPAWN_EGG.equals(material) || ItemTypes.MOOSHROOM_SPAWN_EGG.equals(material) || ItemTypes.MULE_SPAWN_EGG.equals(material) || ItemTypes.OCELOT_SPAWN_EGG.equals(material) || ItemTypes.PANDA_SPAWN_EGG.equals(material) || ItemTypes.PARROT_SPAWN_EGG.equals(material) || ItemTypes.PHANTOM_SPAWN_EGG.equals(material) || ItemTypes.PIG_SPAWN_EGG.equals(material) || ItemTypes.PILLAGER_SPAWN_EGG.equals(material) || ItemTypes.POLAR_BEAR_SPAWN_EGG.equals(material) || ItemTypes.PUFFERFISH_SPAWN_EGG.equals(material) || ItemTypes.RABBIT_SPAWN_EGG.equals(material) || ItemTypes.RAVAGER_SPAWN_EGG.equals(material) || ItemTypes.SALMON_SPAWN_EGG.equals(material) || ItemTypes.SHEEP_SPAWN_EGG.equals(material) || ItemTypes.SHULKER_SPAWN_EGG.equals(material) || ItemTypes.SILVERFISH_SPAWN_EGG.equals(material) || ItemTypes.SKELETON_HORSE_SPAWN_EGG.equals(material) || ItemTypes.SKELETON_SPAWN_EGG.equals(material) || ItemTypes.SLIME_SPAWN_EGG.equals(material) || ItemTypes.SQUID_SPAWN_EGG.equals(material) || ItemTypes.STRAY_SPAWN_EGG.equals(material) || ItemTypes.TRADER_LLAMA_SPAWN_EGG.equals(material) || ItemTypes.TROPICAL_FISH_SPAWN_EGG.equals(material) || ItemTypes.TURTLE_SPAWN_EGG.equals(material) || ItemTypes.VEX_SPAWN_EGG.equals(material) || ItemTypes.VILLAGER_SPAWN_EGG.equals(material) || ItemTypes.VINDICATOR_SPAWN_EGG.equals(material) || ItemTypes.WANDERING_TRADER_SPAWN_EGG.equals(material) || ItemTypes.WITCH_SPAWN_EGG.equals(material) || ItemTypes.WITHER_SKELETON_SPAWN_EGG.equals(material) || ItemTypes.WOLF_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_HORSE_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_PIGMAN_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_VILLAGER_SPAWN_EGG.equals(material)) {
+        /*if (ItemTypes.SPIDER_SPAWN_EGG.equals(material) || ItemTypes.BAT_SPAWN_EGG.equals(material) || ItemTypes.BEE_SPAWN_EGG.equals(material) || ItemTypes.BLAZE_SPAWN_EGG.equals(material) || ItemTypes.CAT_SPAWN_EGG.equals(material) || ItemTypes.CAVE_SPIDER_SPAWN_EGG.equals(material) || ItemTypes.CHICKEN_SPAWN_EGG.equals(material) || ItemTypes.COD_SPAWN_EGG.equals(material) || ItemTypes.COW_SPAWN_EGG.equals(material) || ItemTypes.CREEPER_SPAWN_EGG.equals(material) || ItemTypes.DOLPHIN_SPAWN_EGG.equals(material) || ItemTypes.DONKEY_SPAWN_EGG.equals(material) || ItemTypes.DROWNED_SPAWN_EGG.equals(material) || ItemTypes.ELDER_GUARDIAN_SPAWN_EGG.equals(material) || ItemTypes.ENDERMAN_SPAWN_EGG.equals(material) || ItemTypes.ENDERMITE_SPAWN_EGG.equals(material) || ItemTypes.EVOKER_SPAWN_EGG.equals(material) || ItemTypes.FOX_SPAWN_EGG.equals(material) || ItemTypes.GHAST_SPAWN_EGG.equals(material) || ItemTypes.GUARDIAN_SPAWN_EGG.equals(material) || ItemTypes.HORSE_SPAWN_EGG.equals(material) || ItemTypes.HUSK_SPAWN_EGG.equals(material) || ItemTypes.LLAMA_SPAWN_EGG.equals(material) || ItemTypes.MAGMA_CUBE_SPAWN_EGG.equals(material) || ItemTypes.MOOSHROOM_SPAWN_EGG.equals(material) || ItemTypes.MULE_SPAWN_EGG.equals(material) || ItemTypes.OCELOT_SPAWN_EGG.equals(material) || ItemTypes.PANDA_SPAWN_EGG.equals(material) || ItemTypes.PARROT_SPAWN_EGG.equals(material) || ItemTypes.PHANTOM_SPAWN_EGG.equals(material) || ItemTypes.PIG_SPAWN_EGG.equals(material) || ItemTypes.PILLAGER_SPAWN_EGG.equals(material) || ItemTypes.POLAR_BEAR_SPAWN_EGG.equals(material) || ItemTypes.PUFFERFISH_SPAWN_EGG.equals(material) || ItemTypes.RABBIT_SPAWN_EGG.equals(material) || ItemTypes.RAVAGER_SPAWN_EGG.equals(material) || ItemTypes.SALMON_SPAWN_EGG.equals(material) || ItemTypes.SHEEP_SPAWN_EGG.equals(material) || ItemTypes.SHULKER_SPAWN_EGG.equals(material) || ItemTypes.SILVERFISH_SPAWN_EGG.equals(material) || ItemTypes.SKELETON_HORSE_SPAWN_EGG.equals(material) || ItemTypes.SKELETON_SPAWN_EGG.equals(material) || ItemTypes.SLIME_SPAWN_EGG.equals(material) || ItemTypes.SQUID_SPAWN_EGG.equals(material) || ItemTypes.STRAY_SPAWN_EGG.equals(material) || ItemTypes.TRADER_LLAMA_SPAWN_EGG.equals(material) || ItemTypes.TROPICAL_FISH_SPAWN_EGG.equals(material) || ItemTypes.TURTLE_SPAWN_EGG.equals(material) || ItemTypes.VEX_SPAWN_EGG.equals(material) || ItemTypes.VILLAGER_SPAWN_EGG.equals(material) || ItemTypes.VINDICATOR_SPAWN_EGG.equals(material) || ItemTypes.WANDERING_TRADER_SPAWN_EGG.equals(material) || ItemTypes.WITCH_SPAWN_EGG.equals(material) || ItemTypes.WITHER_SKELETON_SPAWN_EGG.equals(material) || ItemTypes.WOLF_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_HORSE_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_PIGMAN_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_SPAWN_EGG.equals(material) || ItemTypes.ZOMBIE_VILLAGER_SPAWN_EGG.equals(material)) {
             return true;
-        }
-        return false;
+        }*/
+
+        return ItemTypes.SPAWN_EGG.equals(material);
     }
 
-    public static EntityType getEntitySpawnEgg(ItemType material) {
+    public static EntityType getEntitySpawnEgg(ItemStackSnapshot material) {
         // Uhh
-        if (ItemTypes.SPIDER_SPAWN_EGG.equals(material)) {
+        if(material.get(Keys.SPAWNABLE_ENTITY_TYPE).isPresent()){
+            return material.get(Keys.SPAWNABLE_ENTITY_TYPE).get();
+        }
+        return EntityTypes.PIG; //default?
+        /*if (ItemTypes.SPIDER_SPAWN_EGG.equals(material)) {
             return EntityTypes.SPIDER;
         } else if (ItemTypes.BAT_SPAWN_EGG.equals(material)) {
             return EntityTypes.BAT;
@@ -1099,7 +1105,7 @@ public final class Materials {
         } else if (ItemTypes.ZOMBIE_VILLAGER_SPAWN_EGG.equals(material)) {
             return EntityTypes.ZOMBIE_VILLAGER;
         }
-        return EntityTypes.PIG;
+        return EntityTypes.PIG;*/
     }
 
     public static boolean isBed(BlockType material) {
@@ -1232,7 +1238,7 @@ public final class Materials {
      * @return true if equippable armor
      */
     public static boolean isArmor(ItemType type) {
-        if (ItemTypes.LEATHER_HELMET.equals(type) || ItemTypes.LEATHER_CHESTPLATE.equals(type) || ItemTypes.LEATHER_LEGGINGS.equals(type) || ItemTypes.LEATHER_BOOTS.equals(type) || ItemTypes.CHAINMAIL_HELMET.equals(type) || ItemTypes.CHAINMAIL_CHESTPLATE.equals(type) || ItemTypes.CHAINMAIL_LEGGINGS.equals(type) || ItemTypes.CHAINMAIL_BOOTS.equals(type) || ItemTypes.IRON_HELMET.equals(type) || ItemTypes.IRON_CHESTPLATE.equals(type) || ItemTypes.IRON_LEGGINGS.equals(type) || ItemTypes.IRON_BOOTS.equals(type) || ItemTypes.DIAMOND_HELMET.equals(type) || ItemTypes.DIAMOND_CHESTPLATE.equals(type) || ItemTypes.DIAMOND_LEGGINGS.equals(type) || ItemTypes.DIAMOND_BOOTS.equals(type) || ItemTypes.GOLDEN_HELMET.equals(type) || ItemTypes.GOLDEN_CHESTPLATE.equals(type) || ItemTypes.GOLDEN_LEGGINGS.equals(type) || ItemTypes.GOLDEN_BOOTS.equals(type) || ItemTypes.TURTLE_HELMET.equals(type) || ItemTypes.ELYTRA.equals(type)) {
+        if (ItemTypes.LEATHER_HELMET.equals(type) || ItemTypes.LEATHER_CHESTPLATE.equals(type) || ItemTypes.LEATHER_LEGGINGS.equals(type) || ItemTypes.LEATHER_BOOTS.equals(type) || ItemTypes.CHAINMAIL_HELMET.equals(type) || ItemTypes.CHAINMAIL_CHESTPLATE.equals(type) || ItemTypes.CHAINMAIL_LEGGINGS.equals(type) || ItemTypes.CHAINMAIL_BOOTS.equals(type) || ItemTypes.IRON_HELMET.equals(type) || ItemTypes.IRON_CHESTPLATE.equals(type) || ItemTypes.IRON_LEGGINGS.equals(type) || ItemTypes.IRON_BOOTS.equals(type) || ItemTypes.DIAMOND_HELMET.equals(type) || ItemTypes.DIAMOND_CHESTPLATE.equals(type) || ItemTypes.DIAMOND_LEGGINGS.equals(type) || ItemTypes.DIAMOND_BOOTS.equals(type) || ItemTypes.GOLDEN_HELMET.equals(type) || ItemTypes.GOLDEN_CHESTPLATE.equals(type) || ItemTypes.GOLDEN_LEGGINGS.equals(type) || ItemTypes.GOLDEN_BOOTS.equals(type) || /*ItemTypes.TURTLE_HELMET.equals(type) ||*/ ItemTypes.ELYTRA.equals(type)) {
             return true;
         }
         return false;
