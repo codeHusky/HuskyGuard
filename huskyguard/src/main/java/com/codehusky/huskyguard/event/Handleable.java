@@ -19,8 +19,6 @@
 
 package com.codehusky.huskyguard.event;
 
-import org.bukkit.event.Event.Result;
-
 public interface Handleable {
 
     Result getResult();

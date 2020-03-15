@@ -27,25 +27,13 @@ import com.codehusky.huskyguard.event.entity.DestroyEntityEvent;
 import com.codehusky.huskyguard.event.entity.SpawnEntityEvent;
 import com.codehusky.huskyguard.event.inventory.UseItemEvent;
 import com.codehusky.huskyguard.util.Materials;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.blacklist.event.*;
 import com.sk89q.worldguard.config.ConfigurationManager;
 import com.sk89q.worldguard.config.WorldConfiguration;
-import org.bukkit.Material;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.BlockDispenseArmorEvent;
-import org.bukkit.event.block.BlockDispenseEvent;
-import org.bukkit.event.inventory.*;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.spongepowered.api.event.Listener;
+
 
 import static com.codehusky.huskyguard.SpongeUtil.createTarget;
 
@@ -63,7 +51,7 @@ public class BlacklistListener extends AbstractListener {
         super(plugin);
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @Listener
     public void onBreakBlock(final BreakBlockEvent event) {
         final Player player = event.getCause().getFirstPlayer();
 

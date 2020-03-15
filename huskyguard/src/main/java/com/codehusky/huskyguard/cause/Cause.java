@@ -26,7 +26,8 @@ import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
-import org.bukkit.metadata.Metadatable;
+import org.bukkit.metadata.DataSerializable;
+import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.entity.AreaEffectCloud;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityType;
@@ -34,6 +35,8 @@ import org.spongepowered.api.entity.explosive.PrimedTNT;
 import org.spongepowered.api.entity.living.Creature;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.projectile.Projectile;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -147,10 +150,10 @@ public final class Cause {
     }
 
     @Nullable
-    public Block getFirstBlock() {
+    public Location getFirstBlock() {
         for (Object object : causes) {
-            if (object instanceof Block) {
-                return (Block) object;
+            if (object instanceof Location) {
+                return (Location) object;
             }
         }
 
@@ -211,7 +214,7 @@ public final class Cause {
     }
 
     /**
-     * Add a parent cause to a {@code Metadatable} object.
+     * Add a parent cause to a {@code DataSerializable} object.
      *
      * <p>Note that {@code target} cannot be an instance of
      * {@link Block} because {@link #create(Object...)} will not bother
@@ -222,8 +225,8 @@ public final class Cause {
      * @param parent the parent cause
      * @throws IllegalArgumentException thrown if {@code target} is an instance of {@link Block}
      */
-    public static void trackParentCause(Metadatable target, Object parent) {
-        if (target instanceof Block) {
+    public static void trackParentCause(DataSerializable target, Object parent) {
+        if (target instanceof Location) {
             throw new IllegalArgumentException("Can't track causes on Blocks because Cause doesn't check block metadata");
         }
 
@@ -231,11 +234,11 @@ public final class Cause {
     }
 
     /**
-     * Remove a parent cause from a {@code Metadatable} object.
+     * Remove a parent cause from a {@code DataSerializable} object.
      *
      * @param target the target
      */
-    public static void untrackParentCause(Metadatable target) {
+    public static void untrackParentCause(DataSerializable target) {
         HGMetadata.remove(target, CAUSE_KEY);
     }
 
@@ -280,8 +283,8 @@ public final class Cause {
                     // Add manually tracked parent causes
                     Object source = o;
                     int index = causes.size();
-                    while (source instanceof Metadatable && !(source instanceof Block)) {
-                        source = HGMetadata.getIfPresent((Metadatable) source, CAUSE_KEY, Object.class);
+                    while (source instanceof DataSerializable && !(source instanceof Block)) {
+                        source = HGMetadata.getIfPresent((DataSerializable) source, CAUSE_KEY, Object.class);
                         if (source != null) {
                             causes.add(index, source);
                             seen.add(source);

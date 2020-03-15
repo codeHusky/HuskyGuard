@@ -19,12 +19,10 @@
 
 package com.codehusky.huskyguard.internal;
 
-import com.codehusky.huskyguard.HuskyGuardPlugin;
-import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.metadata.Metadatable;
+import org.spongepowered.api.data.DataSerializable;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -36,7 +34,7 @@ public final class HGMetadata {
 
     private HGMetadata() {
     }
-
+    private static HashMap<DataSerializable,HashMap<String, Object>> metadata = new HashMap<>();
     /**
      * Add some metadata to a target.
      *
@@ -44,8 +42,15 @@ public final class HGMetadata {
      * @param key the key
      * @param value the value
      */
-    public static void put(Metadatable target, String key, Object value) {
-        target.setMetadata(key, new FixedMetadataValue(HuskyGuardPlugin.inst(), value));
+    public static void put(DataSerializable target, String key, Object value) {
+        //target.setMetadata(key, new FixedMetadataValue(HuskyGuardPlugin.inst(), value));
+        if(metadata.containsKey(target)){
+            metadata.get(target).put(key,value);
+        }else{
+            HashMap<String, Object> t = new HashMap<>();
+            t.put(key, value);
+            metadata.put(target, t);
+        }
     }
 
     /**
@@ -60,13 +65,23 @@ public final class HGMetadata {
      */
     @Nullable
     @SuppressWarnings("unchecked")
-    public static <T> T getIfPresent(Metadatable target, String key, Class<T> expected) {
-        List<MetadataValue> values = target.getMetadata(key);
-        HuskyGuardPlugin owner = HuskyGuardPlugin.inst();
-        for (MetadataValue value : values) {
+    public static <T> T getIfPresent(DataSerializable target, String key, Class<T> expected) {
+        //List<MetadataValue> values = target.getMetadata(key);
+        //HuskyGuardPlugin owner = HuskyGuardPlugin.inst();
+        /*for (MetadataValue value : values) {
             if (value.getOwningPlugin() == owner) {
                 Object v = value.value();
                 if (expected.isInstance(v)) {
+                    return (T) v;
+                }
+            }
+        }*/
+
+        if(metadata.containsKey(target)){
+            HashMap<String, Object> v = metadata.get(target);
+            if(v.containsKey(key)){
+                Object r = v.get(key);
+                if(expected.isInstance(r)){
                     return (T) v;
                 }
             }
@@ -81,7 +96,13 @@ public final class HGMetadata {
      * @param target the target
      * @param key the key
      */
-    public static void remove(Metadatable target, String key) {
-        target.removeMetadata(key, HuskyGuardPlugin.inst());
+    public static void remove(DataSerializable target, String key) {
+        if(metadata.containsKey(target)){
+            metadata.get(target).remove(key);
+            if(metadata.get(target).size() == 0){
+                metadata.remove(target);
+            }
+        }
+        //target.removeMetadata(key, HuskyGuardPlugin.inst());
     }
 }

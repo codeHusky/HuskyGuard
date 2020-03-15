@@ -24,6 +24,10 @@ import com.google.common.collect.Lists;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.spongepowered.api.event.Cancellable;
+import org.spongepowered.api.event.Event;
+import org.spongepowered.api.event.impl.AbstractEvent;
+import org.spongepowered.api.event.network.ClientConnectionEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -34,13 +38,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * This event is an internal event. We do not recommend handling or throwing
  * this event or its subclasses as the interface is highly subject to change.
  */
-public abstract class DelegateEvent extends Event implements Cancellable, Handleable {
+public abstract class DelegateEvent extends AbstractEvent implements Cancellable, Handleable {
 
     @Nullable
     private final Event originalEvent;
     private final Cause cause;
     private final List<StateFlag> relevantFlags = Lists.newArrayList();
-    private Result result = Result.DEFAULT;
+    //private Result result = Result.DEFAULT;
     private boolean silent;
 
     /**
@@ -51,6 +55,7 @@ public abstract class DelegateEvent extends Event implements Cancellable, Handle
      */
     protected DelegateEvent(@Nullable Event originalEvent, Cause cause) {
         checkNotNull(cause);
+
         this.originalEvent = originalEvent;
         this.cause = cause;
     }

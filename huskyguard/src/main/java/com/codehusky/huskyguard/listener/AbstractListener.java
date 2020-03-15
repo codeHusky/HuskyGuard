@@ -22,7 +22,8 @@ package com.codehusky.huskyguard.listener;
 import com.codehusky.huskyguard.SpongeWorldConfiguration;
 import com.codehusky.huskyguard.HuskyGuardPlugin;
 import com.codehusky.huskyguard.cause.Cause;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.flowpowered.math.vector.Vector3d;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -33,23 +34,19 @@ import com.sk89q.worldguard.protection.DelayedRegionOverlapAssociation;
 import com.sk89q.worldguard.protection.association.Associables;
 import com.sk89q.worldguard.protection.association.RegionAssociable;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
-import io.papermc.lib.PaperLib;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.world.Location;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Abstract listener to ease creation of listeners.
  */
-class AbstractListener implements Listener {
+class AbstractListener {
 
     private final HuskyGuardPlugin plugin;
 
@@ -67,7 +64,7 @@ class AbstractListener implements Listener {
      * Register events.
      */
     public void registerEvents() {
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        Sponge.getEventManager().registerListeners(plugin,this);
     }
 
     /**
@@ -130,20 +127,11 @@ class AbstractListener implements Listener {
         } else if (rootCause instanceof Entity) {
             RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
             final Entity entity = (Entity) rootCause;
-            Location loc;
-            if (PaperLib.isPaper()
-                    && ((SpongeWorldConfiguration) getWorldConfig(BukkitAdapter.adapt(entity.getWorld()))).usePaperEntityOrigin) {
-                loc = entity.getOrigin();
-                if (loc == null) {
-                    loc = entity.getLocation();
-                }
-            } else {
-                loc = entity.getLocation();
-            }
-            return new DelayedRegionOverlapAssociation(query, BukkitAdapter.adapt(loc));
-        } else if (rootCause instanceof Block) {
+
+            return new DelayedRegionOverlapAssociation(query, SpongeAdapter.adapt(entity.getLocation(),entity.getRotation()));
+        } else if (rootCause instanceof Location) {
             RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
-            return new DelayedRegionOverlapAssociation(query, BukkitAdapter.adapt(((Block) rootCause).getLocation()));
+            return new DelayedRegionOverlapAssociation(query, SpongeAdapter.adapt((Location<org.spongepowered.api.world.World>)rootCause, Vector3d.ZERO));
         } else {
             return Associables.constant(Association.NON_MEMBER);
         }
