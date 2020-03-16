@@ -28,7 +28,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
-public class LoggingPlayerInteractEvent extends PlayerInteractEvent implements CancelLogging {
+public class oggingPlayerInteractEvent extends PlayerInteractEvent implements CancelLogging {
 
     private final CancelLogger logger = new CancelLogger();
 

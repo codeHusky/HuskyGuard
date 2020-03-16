@@ -22,6 +22,8 @@ package com.codehusky.huskyguard.internal;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.sponge.SpongeAdapter;
+import com.sk89q.worldedit.world.item.ItemType;
 import com.sk89q.worldguard.blacklist.target.BlockTarget;
 import com.sk89q.worldguard.blacklist.target.ItemTarget;
 import com.sk89q.worldguard.blacklist.target.Target;
@@ -30,6 +32,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.inventory.ItemStack;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Collection;
 
@@ -56,15 +61,15 @@ public class TargetMatcherSet {
         return false;
     }
 
-    public boolean test(Material material) {
-        if (material.isBlock()) {
-            return test(new BlockTarget(BukkitAdapter.asBlockType(material)));
+    public boolean test(CatalogType material) {
+        if (material instanceof BlockType) {
+            return test(new BlockTarget(SpongeAdapter.asBlockType(material)));
         } else {
-            return test(new ItemTarget(BukkitAdapter.asItemType(material)));
+            return test(new ItemTarget(SpongeAdapter.asItemType(material)));
         }
     }
 
-    public boolean test(Block block) {
+    public boolean test(BlockType block) {
         return test(new BlockTarget(BukkitAdapter.asBlockType(block.getType())));
     }
 
@@ -73,7 +78,7 @@ public class TargetMatcherSet {
     }
 
     public boolean test(ItemStack itemStack) {
-        return test(new ItemTarget(BukkitAdapter.asItemType(itemStack.getType())));
+        return test(new ItemTarget(ItemType.REGISTRY.get(itemStack.getType().getId())));
     }
 
     @Override
